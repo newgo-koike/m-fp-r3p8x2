@@ -233,17 +233,7 @@
 <!-- ===================== チームメンバー別 獲得フィー ===================== -->
 <div class="section-label">全期間 ・ チームメンバー別 獲得フィー</div>
 
-<section class="card" style="margin-bottom:16px;">
-  <h2 class="chart-title">メンバー別 獲得フィー 月次推移（全期間）</h2>
-  <div class="chart-wrap tall"><canvas id="member-fee-line"></canvas></div>
-  <div class="legend-note">各メンバーの獲得フィーを折れ線で可視化。チームの成長・個人の活動量の変化が読み取れる</div>
-</section>
-
-<section class="card" style="margin-bottom:24px;">
-  <h2 class="chart-title">メンバー別 獲得フィー 月次（棒グラフ・直近12ヶ月）</h2>
-  <div class="chart-wrap tall"><canvas id="member-fee-bar"></canvas></div>
-  <div class="legend-note">各メンバーの月ごとの実績を棒グラフで比較。空欄は未在籍または0</div>
-</section>
+<div id="member-cards-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap:16px; margin-bottom:24px;"></div>
 
 <!-- ===================== 全期間: 補助情報 ===================== -->
 <div class="section-label">全期間 ・ 補助指標</div>
@@ -980,89 +970,103 @@ function renderYearView(yearKey) {
 select.addEventListener("change", () => renderYearView(select.value));
 renderYearView(latestYear);
 
-/* ================== メンバー別 獲得フィー ================== */
+/* ================== メンバー別 獲得フィー（個人カード） ================== */
 if (MEMBER_DATA && MEMBER_DATA.length > 0) {
-  const memberNames = [...new Set(MEMBER_DATA.map(r => r.name))].sort();
+  const memberNames = [...new Set(MEMBER_DATA.map(r => r.name))];
+  // No順でソート（データの登場順を維持）
+  const noOrder = {};
+  MEMBER_DATA.forEach(r => { if (!(r.name in noOrder)) noOrder[r.name] = r.ym; });
+  memberNames.sort((a, b) => noOrder[a] - noOrder[b]);
+
   const allYMs = [...new Set(MEMBER_DATA.map(r => r.ym))].sort();
-  const ymLabel = ym => {
-    const s = String(ym);
-    return s.slice(0, 4) + "/" + s.slice(4);
-  };
+  const ymLabel = ym => { const s = String(ym); return s.slice(0, 4) + "/" + s.slice(4); };
 
   const memberColors = [
     "#4ade80", "#38bdf8", "#fbbf24", "#f472b6",
     "#a78bfa", "#fb923c", "#34d399", "#f87171",
   ];
 
-  /* 折れ線：全期間 */
-  const lineDatasetsAll = memberNames.map((name, i) => {
-    const data = allYMs.map(ym => {
-      const row = MEMBER_DATA.find(r => r.ym === ym && r.name === name);
-      return row ? row.fee : null;
+  const grid = document.getElementById("member-cards-grid");
+
+  memberNames.forEach((name, i) => {
+    const color = memberColors[i % memberColors.length];
+    const rows = MEMBER_DATA.filter(r => r.name === name);
+    const yms = allYMs;
+    const fees = yms.map(ym => { const r = rows.find(x => x.ym === ym); return r ? r.fee : null; });
+
+    // KPI計算
+    const nonNull = fees.filter(v => v != null);
+    const latestFee = nonNull[nonNull.length - 1] ?? 0;
+    const prevFee = nonNull.length >= 2 ? nonNull[nonNull.length - 2] : null;
+    const maxFee = Math.max(...nonNull);
+    const totalFee = nonNull.reduce((a, v) => a + v, 0);
+    const delta = prevFee != null ? latestFee - prevFee : null;
+    const deltaStr = delta == null ? "" : (delta >= 0 ? `<span style="color:#4ade80">▲¥${(delta/10000).toFixed(0)}万</span>` : `<span style="color:#f87171">▼¥${(Math.abs(delta)/10000).toFixed(0)}万</span>`);
+    const latestYM = rows.length ? ymLabel(rows[rows.length - 1].ym) : "-";
+
+    // カードHTML
+    const canvasId = `member-chart-${i}`;
+    const card = document.createElement("div");
+    card.className = "card";
+    card.style.cssText = "padding:16px;";
+    card.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+        <div>
+          <div style="font-size:15px; font-weight:700; color:${color};">${name}</div>
+          <div style="font-size:11px; color:#94a3b8; margin-top:2px;">最新: ${latestYM}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:18px; font-weight:700;">¥${(latestFee/10000).toFixed(0)}<span style="font-size:11px; color:#94a3b8;">万</span></div>
+          <div style="font-size:11px; margin-top:2px;">${deltaStr}</div>
+        </div>
+      </div>
+      <div style="height:120px; margin-bottom:10px;"><canvas id="${canvasId}"></canvas></div>
+      <div style="display:flex; gap:16px; font-size:11px; color:#94a3b8; border-top:1px solid #334155; padding-top:8px;">
+        <span>自己ベスト <strong style="color:${color}">¥${(maxFee/10000).toFixed(0)}万</strong></span>
+        <span>通算合計 <strong style="color:${color}">¥${(totalFee/10000).toFixed(0)}万</strong></span>
+        <span>稼働月数 <strong style="color:${color}">${nonNull.filter(v=>v>0).length}ヶ月</strong></span>
+      </div>
+    `;
+    grid.appendChild(card);
+
+    // グラフ描画
+    new Chart(document.getElementById(canvasId), {
+      type: "bar",
+      data: {
+        labels: yms.map(ymLabel),
+        datasets: [{
+          data: fees.map(v => v ?? 0),
+          backgroundColor: fees.map((v, idx) => {
+            if (v == null || v === 0) return "#1e293b";
+            return idx === fees.length - 1 || fees.slice(idx+1).every(x => x == null || x === 0)
+              ? color
+              : color + "99";
+          }),
+          borderRadius: 2,
+          datalabels: { display: false },
+        }],
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          datalabels: { display: false },
+          tooltip: {
+            callbacks: { label: ctx => "¥" + (ctx.raw/10000).toFixed(1) + "万" }
+          },
+        },
+        scales: {
+          y: {
+            ticks: { color: "#94a3b8", font: { size: 9 }, callback: v => "¥" + (v/10000).toFixed(0) + "万", maxTicksLimit: 4 },
+            grid: { color: "#334155" },
+          },
+          x: {
+            ticks: { color: "#64748b", font: { size: 8 }, autoSkip: true, maxTicksLimit: 8 },
+            grid: { display: false },
+          },
+        },
+      },
     });
-    return {
-      label: name,
-      data,
-      borderColor: memberColors[i % memberColors.length],
-      backgroundColor: memberColors[i % memberColors.length] + "22",
-      tension: 0.2,
-      pointRadius: 2,
-      spanGaps: true,
-      datalabels: { display: false },
-    };
-  });
-
-  new Chart(document.getElementById("member-fee-line"), {
-    type: "line",
-    data: { labels: allYMs.map(ymLabel), datasets: lineDatasetsAll },
-    options: {
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: "bottom", labels: { color: "#94a3b8", font: { size: 11 } } },
-        datalabels: { display: false },
-      },
-      scales: {
-        y: { ticks: { color: "#94a3b8", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#334155" } },
-        x: { ticks: { color: "#94a3b8", autoSkip: true, maxTicksLimit: 14 }, grid: { display: false } },
-      },
-    },
-  });
-
-  /* 棒グラフ：直近12ヶ月 */
-  const recent12 = allYMs.slice(-12);
-  const barDatasets = memberNames.map((name, i) => {
-    const data = recent12.map(ym => {
-      const row = MEMBER_DATA.find(r => r.ym === ym && r.name === name);
-      return row ? row.fee : 0;
-    });
-    return {
-      label: name,
-      data,
-      backgroundColor: memberColors[i % memberColors.length] + "cc",
-      datalabels: {
-        display: v => v > 0,
-        anchor: "end", align: "top",
-        color: memberColors[i % memberColors.length],
-        font: { size: 8, weight: "600" },
-        formatter: v => "¥" + (v/10000).toFixed(0) + "万",
-      },
-    };
-  });
-
-  new Chart(document.getElementById("member-fee-bar"), {
-    type: "bar",
-    data: { labels: recent12.map(ymLabel), datasets: barDatasets },
-    options: {
-      maintainAspectRatio: false,
-      layout: { padding: { top: 28 } },
-      plugins: {
-        legend: { position: "bottom", labels: { color: "#94a3b8", font: { size: 11 } } },
-      },
-      scales: {
-        y: { ticks: { color: "#94a3b8", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#334155" } },
-        x: { ticks: { color: "#94a3b8" }, grid: { display: false } },
-      },
-    },
   });
 }
 </script>
