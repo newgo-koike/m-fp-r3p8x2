@@ -174,6 +174,12 @@
 
 <section class="grid kpi" id="lifetime-kpi"></section>
 
+<section class="card" style="margin-bottom:16px;">
+  <h2 class="chart-title"><strong>B収入</strong> の月次推移（全期間）</h2>
+  <div class="chart-wrap tall"><canvas id="b-monthly-all"></canvas></div>
+  <div class="legend-note">月ごとのB収入を棒グラフで可視化。明るい色（¥20万超）がBB獲得月または大型チーム稼働月</div>
+</section>
+
 <!-- ===================== 選択年: 詳細 ===================== -->
 <div class="section-label">対象年の内訳 <span class="meta" id="year-label-meta"></span></div>
 
@@ -185,9 +191,9 @@
     <div class="chart-wrap"><canvas id="b-monthly"></canvas></div>
   </div>
   <div class="card">
-    <h2 class="chart-title">月別 個人F vs チームF vs B収入（積み上げ）</h2>
+    <h2 class="chart-title">月別 個人F / チームF（グループバー） + B収入（ライン）</h2>
     <div class="chart-wrap"><canvas id="composition-monthly"></canvas></div>
-    <div class="legend-note">緑（個人F）が小さく紫（B収入）が大きいほど良い</div>
+    <div class="legend-note">棒グラフで個人F・チームFの規模差を直接比較。紫ラインがB収入の推移</div>
   </div>
 </section>
 
@@ -205,9 +211,15 @@
 <!-- ===================== 全期間: チーム規模・効率の指標 ===================== -->
 <div class="section-label">全期間 ・ チーム規模 / 効率の指標</div>
 
+<section class="card" style="margin-bottom:16px;">
+  <h2 class="chart-title">個人F vs <strong style="color:var(--team)">チームF</strong> の月次推移（全期間）</h2>
+  <div class="chart-wrap tall"><canvas id="f-monthly-line"></canvas></div>
+  <div class="legend-note">緑=個人F / 金=チームF。チームF（金）が大きいほど組織の活動規模が拡大</div>
+</section>
+
 <section class="grid charts-2">
   <div class="card">
-    <h2 class="chart-title">F合計（個人 + チーム）の年推移 ・ <strong style="color:var(--team)">チーム規模</strong>（月平均）</h2>
+    <h2 class="chart-title">個人F・チームF の年推移（月平均）</h2>
     <div class="chart-wrap"><canvas id="f-total-annual"></canvas></div>
     <div class="legend-note">緑（個人F月平均）+ 金（チームF月平均）= 月あたりに動かしているフィー総額</div>
   </div>
@@ -600,6 +612,70 @@ new Chart(document.getElementById("insurance-line"), {
   },
 });
 
+/* ---------------- B収入 月次推移（全期間・固定） ---------------- */
+new Chart(document.getElementById("b-monthly-all"), {
+  type: "bar",
+  data: {
+    labels: DATA.map(ym),
+    datasets: [{
+      label: "B収入",
+      data: DATA.map(r => r.b_income),
+      backgroundColor: DATA.map(r => (r.b_income || 0) > 200000 ? "#c4b5fd" : "#a78bfa"),
+    }],
+  },
+  options: {
+    maintainAspectRatio: false,
+    layout: { padding: { top: 28 } },
+    plugins: {
+      legend: { display: false },
+      datalabels: {
+        display: (c) => (c.dataset.data[c.dataIndex] || 0) > 100000,
+        anchor: 'end', align: 'top', color: '#c4b5fd',
+        font: { size: 9, weight: '600' },
+        formatter: v => '¥' + (v/10000).toFixed(0) + '万',
+      },
+    },
+    scales: {
+      y: { ticks: { color: "#94a3b8", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#334155" } },
+      x: { ticks: { color: "#94a3b8", autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+    },
+  },
+});
+
+/* ---------------- 個人F・チームF 月次推移（全期間・固定） ---------------- */
+new Chart(document.getElementById("f-monthly-line"), {
+  type: "line",
+  data: {
+    labels: DATA.map(ym),
+    datasets: [
+      {
+        label: "個人F",
+        data: DATA.map(r => r.kojin_f),
+        borderColor: "#4ade80", backgroundColor: "rgba(74,222,128,0.08)",
+        fill: true, tension: 0.2, pointRadius: 2, pointBackgroundColor: "#4ade80",
+        datalabels: { display: false },
+      },
+      {
+        label: "チームF",
+        data: DATA.map(r => r.team_f),
+        borderColor: "#fbbf24", backgroundColor: "rgba(251,191,36,0.08)",
+        fill: true, tension: 0.2, pointRadius: 2, pointBackgroundColor: "#fbbf24",
+        datalabels: { display: false },
+      },
+    ],
+  },
+  options: {
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { color: "#e2e8f0" } },
+    },
+    scales: {
+      y: { ticks: { color: "#94a3b8", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#334155" } },
+      x: { ticks: { color: "#94a3b8", autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+    },
+  },
+});
+
 /* ---------------- F合計（個人+チーム）の年推移（月平均） ---------------- */
 new Chart(document.getElementById("f-total-annual"), {
   type: "bar",
@@ -782,30 +858,48 @@ function renderYearView(yearKey) {
     },
   });
 
-  // ----- 月別 個人F+チームF+B収入 積み上げ -----
+  // ----- 月別 個人F/チームF（グループバー）+ B収入（ライン） -----
   destroyChart("composition-monthly");
   const cKojin = isAll ? DATA.map(r => r.kojin_f) : months.map(m => { const r = targetRows.find(x => x.month === m); return r ? r.kojin_f : null; });
   const cTeam  = isAll ? DATA.map(r => r.team_f)  : months.map(m => { const r = targetRows.find(x => x.month === m); return r ? r.team_f  : null; });
   const cB     = isAll ? DATA.map(r => r.b_income): months.map(m => { const r = targetRows.find(x => x.month === m); return r ? r.b_income: null; });
+  const barLbl = isAll ? { display: false } : {
+    display: v => v != null && v > 0,
+    anchor: 'end', align: 'top', color: '#e2e8f0',
+    font: { size: 9, weight: '600' },
+    formatter: v => '¥' + (v/10000).toFixed(0) + '万',
+  };
+  const lineLbl = isAll ? { display: false } : {
+    display: v => v != null && v > 0,
+    anchor: 'end', align: 'top', color: '#c4b5fd',
+    font: { size: 9, weight: '600' },
+    formatter: v => '¥' + (v/10000).toFixed(0) + '万',
+  };
   charts["composition-monthly"] = new Chart(document.getElementById("composition-monthly"), {
     type: "bar",
     data: {
       labels,
       datasets: [
-        { label: "個人F", data: cKojin, backgroundColor: "#4ade80" },
-        { label: "チームF", data: cTeam, backgroundColor: "#fbbf24" },
-        { label: "B収入", data: cB, backgroundColor: "#a78bfa" },
+        { label: "個人F", data: cKojin, backgroundColor: "rgba(74,222,128,0.85)", order: 2, datalabels: barLbl },
+        { label: "チームF", data: cTeam, backgroundColor: "rgba(251,191,36,0.85)", order: 3, datalabels: barLbl },
+        {
+          label: "B収入", data: cB, type: "line",
+          borderColor: "#c4b5fd", backgroundColor: "rgba(167,139,250,0.15)",
+          borderWidth: 2.5, fill: true, tension: 0.3,
+          pointBackgroundColor: "#c4b5fd", pointRadius: isAll ? 2 : 5,
+          order: 1, datalabels: lineLbl,
+        },
       ],
     },
     options: {
       maintainAspectRatio: false,
+      layout: { padding: { top: 30 } },
       plugins: {
         legend: { labels: { color: "#e2e8f0" } },
-        datalabels: isAll ? { display: false } : labelYen({ anchor: 'center', align: 'center', color: '#0f172a', size: 9 }),
       },
       scales: {
-        y: { stacked: true, ticks: { color: "#94a3b8", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#334155" } },
-        x: { stacked: true, ticks: { color: "#94a3b8", autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+        y: { ticks: { color: "#94a3b8", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#334155" } },
+        x: { ticks: { color: "#94a3b8", autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
       },
     },
   });
