@@ -220,9 +220,35 @@
 </section>
 
 <!-- ===================== 選択年: 詳細 ===================== -->
-<div class="section-label">対象年の内訳 <span class="meta" id="year-label-meta"></span></div>
+<div class="section-label">対象年の実績 ・ 手取り / 保険本数 / B収入 <span class="meta" id="year-label-meta"></span></div>
 
 <section class="grid kpi" id="year-kpi"></section>
+
+<section class="grid charts-2">
+  <div class="card">
+    <h2 class="chart-title"><strong style="color:var(--commission)">コミッション（手取り）</strong> の月次推移 + 累計（選択年）</h2>
+    <div class="chart-wrap"><canvas id="commission-year"></canvas></div>
+    <div class="legend-note">青の棒=各月のコミッション（左軸）、水色ライン=年初からの累計（右軸）</div>
+  </div>
+  <div class="card">
+    <h2 class="chart-title"><strong style="color:var(--team)">保険本数</strong> の月次推移 + 累計（選択年）</h2>
+    <div class="chart-wrap"><canvas id="insurance-year"></canvas></div>
+    <div class="legend-note">金の棒=各月の保険本数（左軸）、青ライン=年初からの累計本数（右軸）</div>
+  </div>
+</section>
+
+<section class="grid charts-2">
+  <div class="card">
+    <h2 class="chart-title">コミッションの年別合計（全期間比較）</h2>
+    <div class="chart-wrap"><canvas id="commission-annual"></canvas></div>
+    <div class="legend-note">各年の手取り合計。入力月数が少ない年（途中の年）は少なく見える点に注意</div>
+  </div>
+  <div class="card">
+    <h2 class="chart-title">保険本数の年別合計（全期間比較）</h2>
+    <div class="chart-wrap"><canvas id="insurance-annual"></canvas></div>
+    <div class="legend-note">各年の合計本数。入力月数が少ない年（途中の年）は少なく見える点に注意</div>
+  </div>
+</section>
 
 <section class="grid charts-2">
   <div class="card b-emphasis">
@@ -666,6 +692,79 @@ new Chart(document.getElementById("insurance-line"), {
   },
 });
 
+/* ---------------- コミッション 年別合計（全期間・固定） ---------------- */
+new Chart(document.getElementById("commission-annual"), {
+  type: "bar",
+  data: {
+    labels: allYears,
+    datasets: [{
+      label: "コミッション 年合計",
+      data: allYears.map(y => yearTotals[y].commission),
+      backgroundColor: "#38bdf8",
+    }],
+  },
+  options: {
+    maintainAspectRatio: false,
+    layout: { padding: { top: 24 } },
+    plugins: {
+      legend: { display: false },
+      datalabels: labelYen({ color: '#7dd3fc' }),
+      tooltip: {
+        callbacks: {
+          label: c => " 年合計: " + fmtYen(c.parsed.y),
+          afterLabel: c => {
+            const t = yearTotals[c.label];
+            return " " + t.months + "ヶ月分 ・ 月平均 " + fmtYen(t.avg_commission);
+          },
+        },
+      },
+    },
+    scales: {
+      y: { beginAtZero: true, ticks: { color: "#94a3b8", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#334155" } },
+      x: { ticks: { color: "#94a3b8" }, grid: { display: false } },
+    },
+  },
+});
+
+/* ---------------- 保険本数 年別合計（全期間・固定） ---------------- */
+new Chart(document.getElementById("insurance-annual"), {
+  type: "bar",
+  data: {
+    labels: allYears,
+    datasets: [{
+      label: "保険本数 年合計",
+      data: allYears.map(y => yearTotals[y].insurance),
+      backgroundColor: "#fbbf24",
+    }],
+  },
+  options: {
+    maintainAspectRatio: false,
+    layout: { padding: { top: 24 } },
+    plugins: {
+      legend: { display: false },
+      datalabels: {
+        anchor: 'end', align: 'top', color: '#fbbf24',
+        font: { size: 10, weight: '600' },
+        formatter: v => (v == null || v === 0) ? '' : v.toFixed(1) + '本',
+      },
+      tooltip: {
+        callbacks: {
+          label: c => " 年合計: " + (c.parsed.y == null ? "-" : c.parsed.y.toFixed(1) + "本"),
+          afterLabel: c => {
+            const t = yearTotals[c.label];
+            const n = t.months || 1;
+            return " " + t.months + "ヶ月分 ・ 月平均 " + (t.insurance / n).toFixed(1) + "本";
+          },
+        },
+      },
+    },
+    scales: {
+      y: { beginAtZero: true, ticks: { color: "#94a3b8", callback: v => v + "本" }, grid: { color: "#334155" } },
+      x: { ticks: { color: "#94a3b8" }, grid: { display: false } },
+    },
+  },
+});
+
 /* ---------------- B収入 月次推移（全期間・固定） ---------------- */
 new Chart(document.getElementById("b-monthly-all"), {
   type: "bar",
@@ -875,11 +974,128 @@ function renderYearView(yearKey) {
       <div class="value">${fmtYen(best_b_month.b_income)}</div>
       <div class="sub">${best_b_month.year ? ym(best_b_month) : "-"}</div>
     </div>
+    <div class="card kpi">
+      <div class="label">保険本数 ${isAll ? "通算" : "年累計"}</div>
+      <div class="value" style="color:var(--team)">${(() => {
+        const t = sum(targetRows, "insurance");
+        return t.toFixed(1) + "本";
+      })()}</div>
+      <div class="sub">${(() => {
+        const withIns = targetRows.filter(r => r.insurance != null);
+        if (!withIns.length) return "-";
+        const avg = sum(withIns, "insurance") / withIns.length;
+        const last = withIns[withIns.length - 1];
+        return "月平均 " + avg.toFixed(1) + "本 ・ 最新月 " + last.insurance.toFixed(1) + "本 (" + ym(last) + ")";
+      })()}</div>
+    </div>
   `;
+
+  const labels = isAll ? DATA.map(ym) : months.map(m => m + "月");
+
+  // ----- コミッション（選択年）: 月次バー + 累計ライン -----
+  destroyChart("commission-year");
+  const comMonthly = isAll ? DATA.map(r => r.commission) : months.map(m => {
+    const r = targetRows.find(x => x.month === m); return r ? r.commission : null;
+  });
+  let comAcc = 0;
+  const comCum = comMonthly.map(v => v == null ? null : (comAcc += v));
+  charts["commission-year"] = new Chart(document.getElementById("commission-year"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "コミッション（月）", data: comMonthly,
+          backgroundColor: "rgba(56,189,248,0.85)", yAxisID: "y", order: 2,
+          datalabels: isAll ? { display: false } : {
+            display: v => v != null && v > 0,
+            anchor: 'end', align: 'top', color: '#38bdf8',
+            font: { size: 9, weight: '600' },
+            formatter: v => v == null ? '' : '¥' + (v/10000).toFixed(0) + '万',
+          },
+        },
+        {
+          label: "累計", data: comCum, type: "line",
+          borderColor: "#7dd3fc", backgroundColor: "rgba(125,211,252,0.12)",
+          borderWidth: 2.5, tension: 0.25, fill: false,
+          pointBackgroundColor: "#7dd3fc", pointRadius: isAll ? 2 : 4,
+          yAxisID: "y2", order: 1,
+          datalabels: isAll ? { display: false } : {
+            anchor: 'end', align: 'top', color: '#7dd3fc',
+            font: { size: 9, weight: '600' },
+            formatter: v => v == null ? '' : '¥' + (v/10000).toFixed(0) + '万',
+          },
+        },
+      ],
+    },
+    options: {
+      maintainAspectRatio: false,
+      layout: { padding: { top: 28 } },
+      plugins: {
+        legend: { labels: { color: "#e2e8f0" } },
+        tooltip: { callbacks: { label: c => " " + c.dataset.label + ": " + fmtYen(c.parsed.y) } },
+      },
+      scales: {
+        y: { position: "left", beginAtZero: true, ticks: { color: "#38bdf8", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#334155" } },
+        y2: { position: "right", beginAtZero: true, ticks: { color: "#7dd3fc", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { display: false } },
+        x: { ticks: { color: "#94a3b8", autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+      },
+    },
+  });
+
+  // ----- 保険本数（選択年）: 月次バー + 累計ライン -----
+  destroyChart("insurance-year");
+  const insMonthly = isAll ? DATA.map(r => r.insurance) : months.map(m => {
+    const r = targetRows.find(x => x.month === m); return r ? r.insurance : null;
+  });
+  let insAcc = 0;
+  const insCum = insMonthly.map(v => v == null ? null : (insAcc += v));
+  charts["insurance-year"] = new Chart(document.getElementById("insurance-year"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "保険本数（月）", data: insMonthly,
+          backgroundColor: "rgba(251,191,36,0.85)", yAxisID: "y", order: 2,
+          datalabels: isAll ? { display: false } : {
+            display: v => v != null && v > 0,
+            anchor: 'end', align: 'top', color: '#fbbf24',
+            font: { size: 9, weight: '600' },
+            formatter: v => v == null ? '' : v.toFixed(1),
+          },
+        },
+        {
+          label: "累計", data: insCum, type: "line",
+          borderColor: "#38bdf8", backgroundColor: "rgba(56,189,248,0.12)",
+          borderWidth: 2.5, tension: 0.25, fill: false,
+          pointBackgroundColor: "#38bdf8", pointRadius: isAll ? 2 : 4,
+          yAxisID: "y2", order: 1,
+          datalabels: isAll ? { display: false } : {
+            anchor: 'end', align: 'top', color: '#38bdf8',
+            font: { size: 9, weight: '600' },
+            formatter: v => v == null ? '' : v.toFixed(1),
+          },
+        },
+      ],
+    },
+    options: {
+      maintainAspectRatio: false,
+      layout: { padding: { top: 28 } },
+      plugins: {
+        legend: { labels: { color: "#e2e8f0" } },
+        tooltip: { callbacks: { label: c => " " + c.dataset.label + ": " + (c.parsed.y == null ? "-" : c.parsed.y.toFixed(1) + "本") } },
+      },
+      scales: {
+        y: { position: "left", beginAtZero: true, ticks: { color: "#fbbf24", callback: v => v + "本" }, grid: { color: "#334155" } },
+        y2: { position: "right", beginAtZero: true, ticks: { color: "#38bdf8", callback: v => v + "本" }, grid: { display: false } },
+        x: { ticks: { color: "#94a3b8", autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+      },
+    },
+  });
 
   // ----- B収入 月次（選択年） or 全期間 -----
   destroyChart("b-monthly");
-  const labels = isAll ? DATA.map(ym) : months.map(m => m + "月");
   const bMonthly = isAll ? DATA.map(r => r.b_income) : months.map(m => {
     const r = targetRows.find(x => x.month === m); return r ? r.b_income : null;
   });
