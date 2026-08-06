@@ -9,78 +9,115 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <style>
   :root {
-    --bg: #0f172a;
-    --panel: #1e293b;
-    --panel-2: #334155;
-    --text: #e2e8f0;
-    --muted: #94a3b8;
-    --b: #a78bfa;       /* B収入: 紫（最重要） */
-    --b-bright: #c4b5fd;
-    --kojin: #4ade80;   /* 個人F: 緑（自分の実動） */
-    --team: #fbbf24;    /* チームF: 金 */
-    --commission: #38bdf8; /* コミッション: 青 */
-    --good: #4ade80;
-    --bad: #f87171;
+    --bg: #f1f5f9;
+    --panel: #ffffff;
+    --panel-2: #e2e8f0;
+    --text: #1e293b;
+    --muted: #64748b;
+    --b: #8b5cf6;       /* B収入: 紫（最重要） */
+    --b-bright: #7c3aed;
+    --kojin: #16a34a;   /* 個人F: 緑（自分の実動） */
+    --team: #d97706;    /* チームF: アンバー */
+    --commission: #0284c7; /* コミッション: 青 */
+    --good: #16a34a;
+    --bad: #dc2626;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
-    background: var(--bg);
+    background: linear-gradient(180deg, #f8fafc 0%, #edf1f7 100%);
+    background-attachment: fixed;
     color: var(--text);
     line-height: 1.6;
-  }
-  header {
-    padding: 32px 24px 20px;
-    border-bottom: 1px solid var(--panel-2);
     display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    flex-wrap: wrap;
-    gap: 16px;
+    min-height: 100vh;
   }
-  h1 { margin: 0 0 4px; font-size: 24px; }
-  .subtitle { color: var(--muted); font-size: 13px; }
-  .year-selector {
+  .sidebar {
+    width: 232px;
+    flex-shrink: 0;
+    background: var(--panel);
+    border-right: 1px solid var(--panel-2);
+    padding: 26px 16px 16px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    box-shadow: 1px 0 3px rgba(15,23,42,0.04);
+  }
+  .sidebar::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #8b5cf6, #0ea5e9 50%, #f59e0b);
+  }
+  h1 { margin: 0 0 6px; font-size: 20px; color: #0f172a; line-height: 1.3; }
+  .subtitle { color: var(--muted); font-size: 13px; font-weight: 600; }
+  .subtitle-note { color: var(--muted); font-size: 11px; margin-top: 10px; line-height: 1.5; }
+  .side-nav { display: flex; flex-direction: column; gap: 6px; }
+  .tab-btn {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 13.5px;
+    font-weight: 600;
+    padding: 10px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
   }
-  .year-selector label { color: var(--muted); font-size: 12px; }
+  .nav-icon { font-size: 15px; }
+  .tab-btn.active {
+    background: var(--commission);
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(2,132,199,0.35);
+  }
+  .tab-btn:not(.active):hover {
+    background: #f1f5f9;
+    color: var(--text);
+  }
+  .year-selector { display: flex; flex-direction: column; gap: 6px; }
+  .year-selector label { color: var(--muted); font-size: 11px; letter-spacing: .06em; font-weight: 700; }
   .year-selector select {
     background: var(--panel);
     color: var(--text);
-    border: 1px solid var(--panel-2);
+    border: 1px solid #cbd5e1;
     border-radius: 8px;
     padding: 8px 12px;
     font-size: 14px;
     cursor: pointer;
-    min-width: 140px;
+    width: 100%;
+    box-shadow: 0 1px 2px rgba(15,23,42,0.05);
   }
-  main {
-    padding: 24px;
-    max-width: 1320px;
-    margin: 0 auto;
-  }
-  .grid {
-    display: grid;
-    gap: 16px;
-    margin-bottom: 24px;
-  }
+  .side-foot { margin-top: auto; color: var(--muted); font-size: 11px; }
+  .content { flex: 1; min-width: 0; }
+  main { padding: 24px; max-width: 1320px; margin: 0 auto; }
+  .grid { display: grid; gap: 16px; margin-bottom: 24px; }
   .grid.kpi { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
   .grid.charts-2 { grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); }
   .card {
     background: var(--panel);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 20px;
     border: 1px solid var(--panel-2);
+    box-shadow: 0 1px 2px rgba(15,23,42,0.05), 0 6px 16px rgba(15,23,42,0.05);
   }
   .card.b-emphasis {
-    border-color: var(--b);
-    background: linear-gradient(135deg, rgba(167,139,250,0.12) 0%, var(--panel) 60%);
+    border-color: #ddd6fe;
+    background: linear-gradient(135deg, #f5f3ff 0%, #ffffff 60%);
   }
   .kpi .label { color: var(--muted); font-size: 12px; margin-bottom: 8px; letter-spacing: .05em; }
-  .kpi .value { font-size: 28px; font-weight: 700; line-height: 1.1; }
+  .kpi .value { font-size: 28px; font-weight: 700; line-height: 1.1; color: #0f172a; }
   .kpi.b-main .value { font-size: 36px; color: var(--b-bright); }
   .kpi .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
   .delta-good { color: var(--good); }
@@ -91,10 +128,11 @@
     letter-spacing: .12em;
     margin: 32px 0 8px;
     text-transform: uppercase;
+    font-weight: 700;
   }
   .section-label:first-child { margin-top: 0; }
-  .section-label .meta { color: var(--b-bright); margin-left: 8px; font-size: 11px; letter-spacing: 0; text-transform: none; }
-  .chart-title { font-size: 14px; color: var(--muted); margin: 0 0 12px; letter-spacing: .03em; }
+  .section-label .meta { color: var(--b-bright); margin-left: 8px; font-size: 11px; letter-spacing: 0; text-transform: none; font-weight: 600; }
+  .chart-title { font-size: 14px; color: var(--muted); margin: 0 0 12px; letter-spacing: .03em; font-weight: 600; }
   .chart-title strong { color: var(--b-bright); }
   .chart-wrap { position: relative; height: 280px; }
   .chart-wrap.tall { height: 360px; }
@@ -124,56 +162,50 @@
     border-top: 1px solid var(--panel-2);
     margin-top: 32px;
   }
-  .tab-bar {
-    display: flex;
-    gap: 4px;
-    background: var(--panel);
-    border: 1px solid var(--panel-2);
-    border-radius: 10px;
-    padding: 4px;
-  }
-  .tab-btn {
-    background: transparent;
-    border: none;
-    color: var(--muted);
-    font-size: 13px;
-    font-weight: 600;
-    padding: 8px 20px;
-    border-radius: 7px;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-    white-space: nowrap;
-  }
-  .tab-btn.active {
-    background: var(--commission);
-    color: #0f172a;
-  }
-  .tab-btn:not(.active):hover {
-    background: var(--panel-2);
-    color: var(--text);
-  }
   .tab-pane { display: none; }
   .tab-pane.active { display: block; }
+  @media (max-width: 820px) {
+    body { display: block; }
+    .sidebar {
+      position: static;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+      flex-direction: column;
+      gap: 14px;
+      padding: 18px 16px 14px;
+      border-right: none;
+      border-bottom: 1px solid var(--panel-2);
+    }
+    h1 br { display: none; }
+    .subtitle-note br { display: none; }
+    .side-nav { flex-direction: row; flex-wrap: wrap; }
+    .tab-btn { width: auto; }
+    .year-selector { flex-direction: row; align-items: center; }
+    .year-selector select { width: auto; min-width: 140px; }
+    .side-foot { margin-top: 0; }
+  }
 </style>
 </head>
 <body>
-<header>
-  <div>
-    <h1>FP実績ダッシュボード</h1>
-    <div class="subtitle">小池雄悟 ・ <span id="generated-at"></span> 時点 ・ 最重要指標: <strong style="color:var(--b-bright)">B収入</strong>（Bクアドラント = 自分の実動以外の収入）</div>
+<aside class="sidebar">
+  <div class="brand">
+    <h1>FP実績<br>ダッシュボード</h1>
+    <div class="subtitle">小池雄悟</div>
+    <div class="subtitle-note">最重要指標: <strong style="color:var(--b-bright)">B収入</strong><br>（Bクアドラント = 自分の実動以外の収入）</div>
   </div>
-  <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-    <div class="tab-bar">
-      <button class="tab-btn active" data-tab="self">自分の実績</button>
-      <button class="tab-btn" data-tab="team">チームの実績</button>
-      <button class="tab-btn" data-tab="sub">詳細データ</button>
-    </div>
-    <div class="year-selector" id="year-selector-wrap">
-      <label for="year-select">対象年</label>
-      <select id="year-select"></select>
-    </div>
+  <nav class="side-nav">
+    <button class="tab-btn active" data-tab="self"><span class="nav-icon">📈</span>自分の実績</button>
+    <button class="tab-btn" data-tab="team"><span class="nav-icon">👥</span>チームの実績</button>
+    <button class="tab-btn" data-tab="sub"><span class="nav-icon">📊</span>詳細データ</button>
+  </nav>
+  <div class="year-selector" id="year-selector-wrap">
+    <label for="year-select">対象年</label>
+    <select id="year-select"></select>
   </div>
-</header>
+  <div class="side-foot"><span id="generated-at"></span> 時点</div>
+</aside>
+<div class="content">
 <main>
 
 <div id="tab-self" class="tab-pane active">
@@ -344,6 +376,7 @@
 <footer>
   自動生成: <span id="footer-date"></span> ・ Source: 「実績推移」スプレッドシート（売上入力タブ）
 </footer>
+</div><!-- /content -->
 
 <script>
 const DATA = [{"year": 2019, "month": 2, "commission": 56541.0, "kojin_f": 56541.0, "team_f": 0.0, "f_total": 56541.0, "insurance": 0.0, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.6, "b_income": 0.0, "member_payment": null}, {"year": 2019, "month": 3, "commission": 20300.0, "kojin_f": 20300.0, "team_f": 0.0, "f_total": 20300.0, "insurance": 0.0, "bb": 0.0, "kojin_rate": 0.55, "total_rate": 0.55, "b_income": 0.0, "member_payment": null}, {"year": 2019, "month": 4, "commission": 0.0, "kojin_f": 0.0, "team_f": 0.0, "f_total": 0.0, "insurance": 0.0, "bb": 0.0, "kojin_rate": null, "total_rate": null, "b_income": 0.0, "member_payment": null}, {"year": 2019, "month": 5, "commission": 89626.0, "kojin_f": 149377.0, "team_f": 0.0, "f_total": 149377.0, "insurance": 1.9, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.6, "b_income": 0.0, "member_payment": null}, {"year": 2019, "month": 6, "commission": 570568.0, "kojin_f": 713210.0, "team_f": 0.0, "f_total": 713210.0, "insurance": 7.7, "bb": 0.0, "kojin_rate": 0.8, "total_rate": 0.8, "b_income": 0.0, "member_payment": null}, {"year": 2019, "month": 7, "commission": 268668.0, "kojin_f": 383812.0, "team_f": 0.0, "f_total": 383812.0, "insurance": 5.0, "bb": 0.0, "kojin_rate": 0.7, "total_rate": 0.7, "b_income": 0.0, "member_payment": null}, {"year": 2019, "month": 8, "commission": 5676.0, "kojin_f": 10321.0, "team_f": 0.0, "f_total": 10321.0, "insurance": 0.0, "bb": 0.0, "kojin_rate": 0.55, "total_rate": 0.55, "b_income": 0.0, "member_payment": null}, {"year": 2019, "month": 9, "commission": 86677.0, "kojin_f": 144462.0, "team_f": 0.0, "f_total": 144462.0, "insurance": 0.0, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.6, "b_income": 0.0, "member_payment": null}, {"year": 2019, "month": 10, "commission": 330.0, "kojin_f": 600.0, "team_f": 0.0, "f_total": 600.0, "insurance": 0.0, "bb": 0.0, "kojin_rate": 0.55, "total_rate": 0.55, "b_income": 0.0, "member_payment": null}, {"year": 2019, "month": 11, "commission": 63878.0, "kojin_f": 106464.0, "team_f": 0.0, "f_total": 106464.0, "insurance": 1.1, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.6, "b_income": 0.0, "member_payment": null}, {"year": 2019, "month": 12, "commission": 560108.0, "kojin_f": 700135.0, "team_f": 0.0, "f_total": 700135.0, "insurance": 7.8, "bb": 0.0, "kojin_rate": 0.8, "total_rate": 0.8, "b_income": 0.0, "member_payment": null}, {"year": 2020, "month": 1, "commission": 140549.0, "kojin_f": 140549.0, "team_f": 0.0, "f_total": 140549.0, "insurance": 3.7, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.6, "b_income": 0.0, "member_payment": null}, {"year": 2020, "month": 2, "commission": 102324.0, "kojin_f": 102324.0, "team_f": 0.0, "f_total": 102324.0, "insurance": 0.0, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.6, "b_income": 0.0, "member_payment": null}, {"year": 2020, "month": 3, "commission": 317639.0, "kojin_f": 317639.0, "team_f": 0.0, "f_total": 317639.0, "insurance": 3.2, "bb": 0.0, "kojin_rate": 0.7, "total_rate": 0.7, "b_income": 0.0, "member_payment": null}, {"year": 2020, "month": 4, "commission": 137792.0, "kojin_f": 189316.0, "team_f": 52699.0, "f_total": 242015.0, "insurance": 2.1, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.7, "b_income": 24202.40000000001, "member_payment": null}, {"year": 2020, "month": 5, "commission": 353936.0, "kojin_f": 418004.0, "team_f": 97662.0, "f_total": 515666.0, "insurance": 2.0, "bb": 0.0, "kojin_rate": 0.7, "total_rate": 0.8, "b_income": 61333.20000000001, "member_payment": null}, {"year": 2020, "month": 6, "commission": 351007.0, "kojin_f": 417350.0, "team_f": 85630.0, "f_total": 502980.0, "insurance": 5.0, "bb": 0.0, "kojin_rate": 0.7, "total_rate": 0.8, "b_income": 58862.0, "member_payment": null}, {"year": 2020, "month": 7, "commission": 109640.0, "kojin_f": 182734.0, "team_f": 0.0, "f_total": 182734.0, "insurance": 5.1, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.6, "b_income": -0.39999999999417923, "member_payment": null}, {"year": 2020, "month": 8, "commission": 98597.0, "kojin_f": 162570.0, "team_f": 21099.0, "f_total": 183669.0, "insurance": 3.2, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.6, "b_income": 1055.0, "member_payment": null}, {"year": 2020, "month": 9, "commission": 107276.0, "kojin_f": 138342.0, "team_f": 104366.0, "f_total": 242708.0, "insurance": 1.6, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.7, "b_income": 24270.800000000003, "member_payment": null}, {"year": 2020, "month": 10, "commission": 2937.0, "kojin_f": 8632.0, "team_f": 36200.0, "f_total": 44832.0, "insurance": 0.0, "bb": 0.0, "kojin_rate": 0.55, "total_rate": 0.55, "b_income": -1810.6000000000004, "member_payment": null}, {"year": 2020, "month": 11, "commission": 444329.0, "kojin_f": 531751.0, "team_f": 94637.0, "f_total": 626388.0, "insurance": 5.5, "bb": 0.0, "kojin_rate": 0.8, "total_rate": 0.8, "b_income": 18928.199999999953, "member_payment": null}, {"year": 2020, "month": 12, "commission": 638506.0, "kojin_f": 618150.0, "team_f": 163849.0, "f_total": 781999.0, "insurance": 5.6, "bb": 0.0, "kojin_rate": 0.8, "total_rate": 0.8, "b_income": 143986.0, "member_payment": null}, {"year": 2021, "month": 1, "commission": 0.0, "kojin_f": 9500.0, "team_f": 144645.0, "f_total": 154145.0, "insurance": 0.0, "bb": 0.0, "kojin_rate": 0.55, "total_rate": 0.6, "b_income": -5225.0, "member_payment": null}, {"year": 2021, "month": 2, "commission": 151208.0, "kojin_f": 213520.0, "team_f": 118568.0, "f_total": 332088.0, "insurance": 1.9, "bb": 0.0, "kojin_rate": 0.7, "total_rate": 0.7, "b_income": 1744.0, "member_payment": null}, {"year": 2021, "month": 3, "commission": 1575410.0, "kojin_f": 1340233.0, "team_f": 540196.0, "f_total": 1880429.0, "insurance": 15.1, "bb": 1.0, "kojin_rate": 0.95, "total_rate": 0.95, "b_income": 302188.65000000014, "member_payment": null}, {"year": 2021, "month": 4, "commission": 1983893.0, "kojin_f": 1709792.0, "team_f": 2235704.0, "f_total": 3945496.0, "insurance": 14.8, "bb": 2.0, "kojin_rate": 0.95, "total_rate": 0.95, "b_income": 359590.6000000001, "member_payment": null}, {"year": 2021, "month": 5, "commission": 41071.0, "kojin_f": 68450.0, "team_f": 94501.0, "f_total": 162951.0, "insurance": 0.0, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.6, "b_income": 1.0, "member_payment": null}, {"year": 2021, "month": 6, "commission": 142641.0, "kojin_f": 199738.0, "team_f": 18825.0, "f_total": 218563.0, "insurance": 2.9, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.7, "b_income": 22798.20000000001, "member_payment": null}, {"year": 2021, "month": 7, "commission": 118172.0, "kojin_f": 164685.0, "team_f": 184637.0, "f_total": 349322.0, "insurance": 0.7, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.7, "b_income": 19361.0, "member_payment": null}, {"year": 2021, "month": 8, "commission": 179728.0, "kojin_f": 235486.0, "team_f": 148170.0, "f_total": 383656.0, "insurance": 2.0, "bb": 0.0, "kojin_rate": 0.7, "total_rate": 0.7, "b_income": 14887.800000000017, "member_payment": null}, {"year": 2021, "month": 9, "commission": 152265.0, "kojin_f": 212405.0, "team_f": 225675.0, "f_total": 438080.0, "insurance": 3.3, "bb": 0.0, "kojin_rate": 0.7, "total_rate": 0.7, "b_income": 3581.5, "member_payment": null}, {"year": 2021, "month": 10, "commission": 30871.0, "kojin_f": 85970.0, "team_f": 322800.0, "f_total": 408770.0, "insurance": 0.0, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.7, "b_income": -20711.0, "member_payment": null}, {"year": 2021, "month": 11, "commission": -9706.0, "kojin_f": 2500.0, "team_f": 122024.0, "f_total": 124524.0, "insurance": 0.0, "bb": 0.0, "kojin_rate": 0.55, "total_rate": 0.6, "b_income": -11081.0, "member_payment": null}, {"year": 2021, "month": 12, "commission": 394955.0, "kojin_f": 456154.0, "team_f": 149408.0, "f_total": 605562.0, "insurance": 5.7, "bb": 0.0, "kojin_rate": 0.7, "total_rate": 0.8, "b_income": 75647.20000000001, "member_payment": null}, {"year": 2022, "month": 1, "commission": 84456.0, "kojin_f": 165526.0, "team_f": 334442.0, "f_total": 499968.0, "insurance": 2.2, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.7, "b_income": -14859.599999999991, "member_payment": null}, {"year": 2022, "month": 2, "commission": 88589.0, "kojin_f": 115695.0, "team_f": 221473.0, "f_total": 337168.0, "insurance": 0.9, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.7, "b_income": 19172.0, "member_payment": null}, {"year": 2022, "month": 3, "commission": 503045.0, "kojin_f": 599180.0, "team_f": 181689.0, "f_total": 780869.0, "insurance": 5.2, "bb": 0.0, "kojin_rate": 0.8, "total_rate": 0.8, "b_income": 23701.0, "member_payment": null}, {"year": 2022, "month": 4, "commission": 466927.0, "kojin_f": 563937.0, "team_f": 429429.0, "f_total": 993366.0, "insurance": 5.3, "bb": 0.0, "kojin_rate": 0.8, "total_rate": 0.8, "b_income": 15777.399999999965, "member_payment": null}, {"year": 2022, "month": 5, "commission": 482369.0, "kojin_f": 575501.0, "team_f": 212867.0, "f_total": 788368.0, "insurance": 6.8, "bb": 0.0, "kojin_rate": 0.8, "total_rate": 0.8, "b_income": 21968.199999999953, "member_payment": null}, {"year": 2022, "month": 6, "commission": 1247668.0, "kojin_f": 1075806.0, "team_f": 461680.0, "f_total": 1537486.0, "insurance": 6.6, "bb": 1.0, "kojin_rate": 0.9, "total_rate": 0.95, "b_income": 279442.6, "member_payment": null}, {"year": 2022, "month": 7, "commission": 306918.0, "kojin_f": 346937.0, "team_f": 291806.0, "f_total": 638743.0, "insurance": 3.8, "bb": 0.0, "kojin_rate": 0.7, "total_rate": 0.8, "b_income": 64062.100000000006, "member_payment": null}, {"year": 2022, "month": 8, "commission": 149540.0, "kojin_f": 205316.0, "team_f": 173929.0, "f_total": 379245.0, "insurance": 0.3, "bb": 0.0, "kojin_rate": 0.7, "total_rate": 0.7, "b_income": 5818.8000000000175, "member_payment": null}, {"year": 2022, "month": 9, "commission": 903532.0, "kojin_f": 992540.0, "team_f": 30079.0, "f_total": 1022619.0, "insurance": 1.0, "bb": 0.0, "kojin_rate": 0.8, "total_rate": 0.9, "b_income": 109500.0, "member_payment": null}, {"year": 2022, "month": 10, "commission": 105226.0, "kojin_f": 145169.0, "team_f": 143009.0, "f_total": 288178.0, "insurance": 1.8, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.7, "b_income": 18124.600000000006, "member_payment": null}, {"year": 2022, "month": 11, "commission": 9912.0, "kojin_f": 10400.0, "team_f": 490126.0, "f_total": 500526.0, "insurance": 0.0, "bb": 0.0, "kojin_rate": 0.55, "total_rate": 0.8, "b_income": 4191.999999999999, "member_payment": null}, {"year": 2022, "month": 12, "commission": 418463.0, "kojin_f": 181700.0, "team_f": 1057686.0, "f_total": 1239386.0, "insurance": 2.1, "bb": 1.0, "kojin_rate": 0.6, "total_rate": 0.95, "b_income": 309443.0, "member_payment": null}, {"year": 2023, "month": 1, "commission": 259480.0, "kojin_f": 276669.0, "team_f": 259564.0, "f_total": 536233.0, "insurance": 3.2, "bb": 0.0, "kojin_rate": 0.7, "total_rate": 0.8, "b_income": 65811.70000000001, "member_payment": null}, {"year": 2023, "month": 2, "commission": 176678.0, "kojin_f": 224880.0, "team_f": 192613.0, "f_total": 417493.0, "insurance": 1.4, "bb": 0.0, "kojin_rate": 0.7, "total_rate": 0.7, "b_income": 19262.0, "member_payment": null}, {"year": 2023, "month": 3, "commission": 279443.0, "kojin_f": 301416.0, "team_f": 329351.0, "f_total": 630767.0, "insurance": 1.3, "bb": 0.0, "kojin_rate": 0.7, "total_rate": 0.8, "b_income": 68451.80000000002, "member_payment": null}, {"year": 2023, "month": 4, "commission": 102911.0, "kojin_f": 133745.0, "team_f": 92058.0, "f_total": 225803.0, "insurance": 0.0, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.7, "b_income": 22664.0, "member_payment": null}, {"year": 2023, "month": 5, "commission": 831951.0, "kojin_f": 857153.0, "team_f": 247513.0, "f_total": 1104666.0, "insurance": 8.2, "bb": 0.0, "kojin_rate": 0.8, "total_rate": 0.9, "b_income": 146228.59999999998, "member_payment": null}, {"year": 2023, "month": 6, "commission": 127171.0, "kojin_f": 176033.0, "team_f": 26310.0, "f_total": 202343.0, "insurance": 0.0, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.7, "b_income": 21551.199999999997, "member_payment": null}, {"year": 2023, "month": 7, "commission": 49718.0, "kojin_f": 81494.0, "team_f": 16437.0, "f_total": 97931.0, "insurance": 0.0, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.6, "b_income": 821.5999999999985, "member_payment": null}, {"year": 2023, "month": 8, "commission": 1081591.0, "kojin_f": 923468.0, "team_f": 947766.0, "f_total": 1871234.0, "insurance": 11.6, "bb": 1.5, "kojin_rate": 0.8, "total_rate": 0.95, "b_income": 342816.6, "member_payment": null}, {"year": 2023, "month": 9, "commission": 120045.0, "kojin_f": 117746.0, "team_f": 574438.0, "f_total": 692184.0, "insurance": 1.1, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.8, "b_income": 49397.40000000001, "member_payment": null}, {"year": 2023, "month": 10, "commission": 348552.0, "kojin_f": 396054.0, "team_f": 317076.0, "f_total": 713130.0, "insurance": 4.8, "bb": 0.0, "kojin_rate": 0.7, "total_rate": 0.8, "b_income": 71314.20000000001, "member_payment": null}, {"year": 2023, "month": 11, "commission": 350115.0, "kojin_f": 384491.0, "team_f": 356498.0, "f_total": 740989.0, "insurance": 5.2, "bb": 0.0, "kojin_rate": 0.7, "total_rate": 0.8, "b_income": 80971.29999999999, "member_payment": null}, {"year": 2023, "month": 12, "commission": 1181516.0, "kojin_f": 1011530.0, "team_f": 635043.0, "f_total": 1646573.0, "insurance": 3.6, "bb": 1.0, "kojin_rate": 0.9, "total_rate": 0.95, "b_income": 271139.0, "member_payment": null}, {"year": 2024, "month": 1, "commission": 259979.0, "kojin_f": 266184.0, "team_f": 389480.0, "f_total": 655664.0, "insurance": 1.5, "bb": 0.0, "kojin_rate": 0.7, "total_rate": 0.8, "b_income": 73650.20000000001, "member_payment": null}, {"year": 2024, "month": 2, "commission": 405320.0, "kojin_f": 449703.0, "team_f": 296481.0, "f_total": 746184.0, "insurance": 0.0, "bb": 0.0, "kojin_rate": 0.7, "total_rate": 0.8, "b_income": 90527.90000000002, "member_payment": null}, {"year": 2024, "month": 3, "commission": 490293.0, "kojin_f": 507451.0, "team_f": 666766.0, "f_total": 1174217.0, "insurance": 3.3, "bb": 0.0, "kojin_rate": 0.8, "total_rate": 0.9, "b_income": 84332.19999999995, "member_payment": null}, {"year": 2024, "month": 4, "commission": 278737.0, "kojin_f": 311172.0, "team_f": 481747.0, "f_total": 792919.0, "insurance": 3.1, "bb": 0.0, "kojin_rate": 0.7, "total_rate": 0.8, "b_income": 60916.600000000006, "member_payment": null}, {"year": 2024, "month": 5, "commission": 475725.0, "kojin_f": 191257.0, "team_f": 1242937.0, "f_total": 1434194.0, "insurance": 2.6, "bb": 1.0, "kojin_rate": 0.6, "total_rate": 0.95, "b_income": 360970.8, "member_payment": null}, {"year": 2024, "month": 6, "commission": 42793.0, "kojin_f": 40664.0, "team_f": 258409.0, "f_total": 299073.0, "insurance": 0.0, "bb": 0.0, "kojin_rate": 0.55, "total_rate": 0.7, "b_income": 20427.8, "member_payment": null}, {"year": 2024, "month": 7, "commission": 429230.0, "kojin_f": 120305.0, "team_f": 1268026.0, "f_total": 1388331.0, "insurance": 0.0, "bb": 1.5, "kojin_rate": 0.6, "total_rate": 0.95, "b_income": 357047.0, "member_payment": null}, {"year": 2024, "month": 8, "commission": 717965.0, "kojin_f": 357539.0, "team_f": 1486017.0, "f_total": 1843556.0, "insurance": 5.9, "bb": 1.5, "kojin_rate": 0.7, "total_rate": 0.95, "b_income": 467687.7, "member_payment": null}, {"year": 2024, "month": 9, "commission": 68934.0, "kojin_f": 65673.0, "team_f": 218978.0, "f_total": 284651.0, "insurance": 0.0, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.7, "b_income": 29530.200000000004, "member_payment": null}, {"year": 2024, "month": 10, "commission": 264701.0, "kojin_f": 286452.0, "team_f": 508370.0, "f_total": 794822.0, "insurance": 3.7, "bb": 0.0, "kojin_rate": 0.7, "total_rate": 0.8, "b_income": 64184.600000000006, "member_payment": null}, {"year": 2024, "month": 11, "commission": 390089.0, "kojin_f": 313340.0, "team_f": 713161.0, "f_total": 1026501.0, "insurance": 2.8, "bb": 0.0, "kojin_rate": 0.7, "total_rate": 0.9, "b_income": 170751.0, "member_payment": null}, {"year": 2024, "month": 12, "commission": 854247.0, "kojin_f": 680755.0, "team_f": 1314826.0, "f_total": 1995581.0, "insurance": 7.4, "bb": 1.5, "kojin_rate": 0.8, "total_rate": 0.95, "b_income": 309643.0, "member_payment": null}, {"year": 2025, "month": 1, "commission": 333876.0, "kojin_f": 17242.0, "team_f": 1227764.0, "f_total": 1245006.0, "insurance": 0.0, "bb": 1.5, "kojin_rate": 0.55, "total_rate": 0.95, "b_income": 324392.9, "member_payment": null}, {"year": 2025, "month": 2, "commission": 110668.0, "kojin_f": 42173.0, "team_f": 1127631.0, "f_total": 1169804.0, "insurance": 0.0, "bb": 0.0, "kojin_rate": 0.55, "total_rate": 0.9, "b_income": 87472.85, "member_payment": null}, {"year": 2025, "month": 3, "commission": 604286.0, "kojin_f": 337871.0, "team_f": 1142586.0, "f_total": 1480457.0, "insurance": 2.5, "bb": 1.0, "kojin_rate": 0.7, "total_rate": 0.95, "b_income": 367776.30000000005, "member_payment": null}, {"year": 2025, "month": 4, "commission": 288494.0, "kojin_f": 303637.0, "team_f": 643343.0, "f_total": 946980.0, "insurance": 3.9, "bb": 0.0, "kojin_rate": 0.7, "total_rate": 0.8, "b_income": 75948.1, "member_payment": null}, {"year": 2025, "month": 5, "commission": 188809.0, "kojin_f": 187147.0, "team_f": 556184.0, "f_total": 743331.0, "insurance": 1.6, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.8, "b_income": 76520.8, "member_payment": null}, {"year": 2025, "month": 6, "commission": 535957.0, "kojin_f": 275869.0, "team_f": 926117.0, "f_total": 1201986.0, "insurance": 3.3, "bb": 1.0, "kojin_rate": 0.7, "total_rate": 0.95, "b_income": 342848.7, "member_payment": null}, {"year": 2025, "month": 7, "commission": 117470.0, "kojin_f": 125095.0, "team_f": 738960.0, "f_total": 864055.0, "insurance": 1.1, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.8, "b_income": 42413.0, "member_payment": null}, {"year": 2025, "month": 8, "commission": 109212.0, "kojin_f": 84054.0, "team_f": 600371.0, "f_total": 684425.0, "insurance": 0.6, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.8, "b_income": 58779.6, "member_payment": null}, {"year": 2025, "month": 9, "commission": 171204.0, "kojin_f": 188325.0, "team_f": 435575.0, "f_total": 623900.0, "insurance": 1.0, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.8, "b_income": 58209.0, "member_payment": null}, {"year": 2025, "month": 10, "commission": 277544.0, "kojin_f": 321090.0, "team_f": 573659.0, "f_total": 894749.0, "insurance": 4.2, "bb": 0.0, "kojin_rate": 0.7, "total_rate": 0.8, "b_income": 52781.0, "member_payment": null}, {"year": 2025, "month": 11, "commission": 90813.0, "kojin_f": 90257.0, "team_f": 276874.0, "f_total": 367131.0, "insurance": 0.6, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.7, "b_income": 36658.8, "member_payment": null}, {"year": 2025, "month": 12, "commission": 102781.0, "kojin_f": 59794.0, "team_f": 487978.0, "f_total": 547772.0, "insurance": 0.0, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.8, "b_income": 66904.6, "member_payment": null}, {"year": 2026, "month": 1, "commission": 207438.0, "kojin_f": 164680.0, "team_f": 508901.0, "f_total": 673581.0, "insurance": 1.9, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.8, "b_income": 108630.0, "member_payment": 331426.0}, {"year": 2026, "month": 2, "commission": 256003.0, "kojin_f": 252688.0, "team_f": 350053.0, "f_total": 602741.0, "insurance": 3.1, "bb": 0.0, "kojin_rate": 0.7, "total_rate": 0.8, "b_income": 79121.40000000002, "member_payment": 226189.0}, {"year": 2026, "month": 3, "commission": 878632.0, "kojin_f": 610317.0, "team_f": 1535684.0, "f_total": 2146001.0, "insurance": 4.4, "bb": 1.5, "kojin_rate": 0.8, "total_rate": 0.95, "b_income": 390378.39999999997, "member_payment": 1305778.0}, {"year": 2026, "month": 4, "commission": 115306.0, "kojin_f": 71484.0, "team_f": 853773.0, "f_total": 925257.0, "insurance": 0.0, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.8, "b_income": 72415.6, "member_payment": 624899.0}, {"year": 2026, "month": 5, "commission": 106774.0, "kojin_f": 64700.0, "team_f": 440958.0, "f_total": 505658.0, "insurance": 0.0, "bb": 0.0, "kojin_rate": 0.6, "total_rate": 0.8, "b_income": 67954.0, "member_payment": 297752.0}, {"year": 2026, "month": 6, "commission": 74726.0, "kojin_f": 43900.0, "team_f": 843372.0, "f_total": 887272.0, "insurance": 0.0, "bb": 0.0, "kojin_rate": 0.55, "total_rate": 0.8, "b_income": 50581.0, "member_payment": 635091.0}];
@@ -367,7 +400,7 @@ if (typeof ChartDataLabels !== 'undefined') {
 const labelYen = (opts = {}) => ({
   anchor: opts.anchor || 'end',
   align: opts.align || 'top',
-  color: opts.color || '#e2e8f0',
+  color: opts.color || '#334155',
   font: { size: opts.size || 10, weight: '600' },
   formatter: v => (v == null || v === 0) ? '' : '¥' + (v/10000).toFixed(0) + '万',
   ...opts.extra,
@@ -375,7 +408,7 @@ const labelYen = (opts = {}) => ({
 const labelPct = (opts = {}) => ({
   anchor: opts.anchor || 'end',
   align: opts.align || 'top',
-  color: opts.color || '#e2e8f0',
+  color: opts.color || '#334155',
   font: { size: opts.size || 10, weight: '600' },
   formatter: v => (v == null) ? '' : v.toFixed(1) + '%',
   ...opts.extra,
@@ -383,7 +416,7 @@ const labelPct = (opts = {}) => ({
 const labelRaw = (opts = {}) => ({
   anchor: opts.anchor || 'end',
   align: opts.align || 'top',
-  color: opts.color || '#e2e8f0',
+  color: opts.color || '#334155',
   font: { size: opts.size || 10, weight: '600' },
   formatter: v => v == null ? '' : (typeof opts.suffix === 'string' ? v.toFixed(2) + opts.suffix : v.toFixed(1)),
   ...opts.extra,
@@ -515,15 +548,15 @@ if (zeroData.length > 0) {
     data: {
       labels: zeroData.map(ym),
       datasets: [
-        { label: "組織収入（差額分）", data: zeroData.map(r => r.org_income), backgroundColor: "#a78bfa" },
-        { label: "BB分", data: zeroData.map(r => r.bb_yen), backgroundColor: "#fbbf24" },
+        { label: "組織収入（差額分）", data: zeroData.map(r => r.org_income), backgroundColor: "#8b5cf6" },
+        { label: "BB分", data: zeroData.map(r => r.bb_yen), backgroundColor: "#f59e0b" },
       ],
     },
     options: {
       maintainAspectRatio: false,
       plugins: {
-        legend: { labels: { color: "#e2e8f0" } },
-        datalabels: labelYen({ anchor: 'center', align: 'center', color: '#0f172a', size: 10 }),
+        legend: { labels: { color: "#334155" } },
+        datalabels: labelYen({ anchor: 'center', align: 'center', color: '#ffffff', size: 10 }),
         tooltip: {
           callbacks: {
             footer: items => "合計: " + fmtYen(items.reduce((a,i) => a + i.parsed.y, 0)),
@@ -531,8 +564,8 @@ if (zeroData.length > 0) {
         },
       },
       scales: {
-        y: { stacked: true, ticks: { color: "#94a3b8", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#334155" } },
-        x: { stacked: true, ticks: { color: "#94a3b8" }, grid: { display: false } },
+        y: { stacked: true, ticks: { color: "#64748b", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#e2e8f0" } },
+        x: { stacked: true, ticks: { color: "#64748b" }, grid: { display: false } },
       },
     },
   });
@@ -548,7 +581,7 @@ if (zeroData.length > 0) {
     <div>チームF合計: <strong>${fmtYen(r.team_f)}</strong></div>
     <div>適用ステージレート: <strong>${rate}%</strong></div>
     <div>原資 (チームF × ${rate}%): <strong>${fmtYen(r.team_f * r.applied_rate)}</strong></div>
-    <div style="color:#f87171;">− メンバー支給合計: ${fmtYen(r.member_payment)}</div>
+    <div style="color:#dc2626;">− メンバー支給合計: ${fmtYen(r.member_payment)}</div>
     <div style="border-top:1px solid var(--panel-2); margin-top:6px; padding-top:6px;">
       組織収入（差額）: <strong style="color:var(--b-bright)">${fmtYen(r.org_income)}</strong>
     </div>
@@ -601,8 +634,8 @@ new Chart(document.getElementById("b-annual"), {
     datasets: [{
       label: "B収入 月平均",
       data: allYears.map(y => yearTotals[y].avg_b_income),
-      backgroundColor: "#a78bfa",
-      borderColor: "#c4b5fd",
+      backgroundColor: "#8b5cf6",
+      borderColor: "#7c3aed",
       borderWidth: 1,
     }],
   },
@@ -611,7 +644,7 @@ new Chart(document.getElementById("b-annual"), {
     layout: { padding: { top: 24 } },
     plugins: {
       legend: { display: false },
-      datalabels: labelYen({ color: '#c4b5fd' }),
+      datalabels: labelYen({ color: '#7c3aed' }),
       tooltip: {
         callbacks: {
           label: c => " 月平均: " + fmtYen(c.parsed.y),
@@ -623,8 +656,8 @@ new Chart(document.getElementById("b-annual"), {
       },
     },
     scales: {
-      y: { ticks: { color: "#94a3b8", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#334155" } },
-      x: { ticks: { color: "#94a3b8" }, grid: { display: false } },
+      y: { ticks: { color: "#64748b", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#e2e8f0" } },
+      x: { ticks: { color: "#64748b" }, grid: { display: false } },
     },
   },
 });
@@ -637,11 +670,11 @@ new Chart(document.getElementById("b-ratio-annual"), {
     datasets: [{
       label: "B収入比率",
       data: allYears.map(y => yearTotals[y].b_ratio * 100),
-      borderColor: "#c4b5fd",
-      backgroundColor: "rgba(167,139,250,0.2)",
+      borderColor: "#7c3aed",
+      backgroundColor: "rgba(139,92,246,0.2)",
       fill: true,
       tension: 0.3,
-      pointBackgroundColor: "#c4b5fd",
+      pointBackgroundColor: "#7c3aed",
       pointRadius: 5,
     }],
   },
@@ -650,11 +683,11 @@ new Chart(document.getElementById("b-ratio-annual"), {
     layout: { padding: { top: 24 } },
     plugins: {
       legend: { display: false },
-      datalabels: labelPct({ color: '#c4b5fd' }),
+      datalabels: labelPct({ color: '#7c3aed' }),
     },
     scales: {
-      y: { ticks: { color: "#94a3b8", callback: v => v.toFixed(0) + "%" }, grid: { color: "#334155" }, beginAtZero: true },
-      x: { ticks: { color: "#94a3b8" }, grid: { display: false } },
+      y: { ticks: { color: "#64748b", callback: v => v.toFixed(0) + "%" }, grid: { color: "#e2e8f0" }, beginAtZero: true },
+      x: { ticks: { color: "#64748b" }, grid: { display: false } },
     },
   },
 });
@@ -665,20 +698,20 @@ new Chart(document.getElementById("b-vs-kojin-annual"), {
   data: {
     labels: allYears,
     datasets: [
-      { label: "個人F", data: allYears.map(y => yearTotals[y].avg_kojin_f), backgroundColor: "#4ade80" },
-      { label: "チームF", data: allYears.map(y => yearTotals[y].avg_team_f), backgroundColor: "#fbbf24" },
-      { label: "B収入", data: allYears.map(y => yearTotals[y].avg_b_income), backgroundColor: "#a78bfa" },
+      { label: "個人F", data: allYears.map(y => yearTotals[y].avg_kojin_f), backgroundColor: "#16a34a" },
+      { label: "チームF", data: allYears.map(y => yearTotals[y].avg_team_f), backgroundColor: "#f59e0b" },
+      { label: "B収入", data: allYears.map(y => yearTotals[y].avg_b_income), backgroundColor: "#8b5cf6" },
     ],
   },
   options: {
     maintainAspectRatio: false,
     plugins: {
-      legend: { labels: { color: "#e2e8f0" } },
-      datalabels: labelYen({ anchor: 'center', align: 'center', color: '#0f172a', size: 9 }),
+      legend: { labels: { color: "#334155" } },
+      datalabels: labelYen({ anchor: 'center', align: 'center', color: '#ffffff', size: 9 }),
     },
     scales: {
-      y: { stacked: true, ticks: { color: "#94a3b8", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#334155" } },
-      x: { stacked: true, ticks: { color: "#94a3b8" }, grid: { display: false } },
+      y: { stacked: true, ticks: { color: "#64748b", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#e2e8f0" } },
+      x: { stacked: true, ticks: { color: "#64748b" }, grid: { display: false } },
     },
   },
 });
@@ -688,7 +721,7 @@ new Chart(document.getElementById("insurance-line"), {
   type: "line",
   data: {
     labels: DATA.map(ym),
-    datasets: [{ label: "保険本数", data: DATA.map(r => r.insurance), borderColor: "#fbbf24", backgroundColor: "#fbbf24", tension: 0.2 }],
+    datasets: [{ label: "保険本数", data: DATA.map(r => r.insurance), borderColor: "#f59e0b", backgroundColor: "#f59e0b", tension: 0.2 }],
   },
   options: {
     maintainAspectRatio: false,
@@ -697,8 +730,8 @@ new Chart(document.getElementById("insurance-line"), {
       datalabels: { display: false }, // 月別データが多いので非表示
     },
     scales: {
-      y: { ticks: { color: "#94a3b8" }, grid: { color: "#334155" } },
-      x: { ticks: { color: "#94a3b8", autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+      y: { ticks: { color: "#64748b" }, grid: { color: "#e2e8f0" } },
+      x: { ticks: { color: "#64748b", autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
     },
   },
 });
@@ -711,7 +744,7 @@ new Chart(document.getElementById("commission-annual"), {
     datasets: [{
       label: "コミッション 年合計",
       data: allYears.map(y => yearTotals[y].commission),
-      backgroundColor: "#38bdf8",
+      backgroundColor: "#0ea5e9",
     }],
   },
   options: {
@@ -719,7 +752,7 @@ new Chart(document.getElementById("commission-annual"), {
     layout: { padding: { top: 24 } },
     plugins: {
       legend: { display: false },
-      datalabels: labelYen({ color: '#7dd3fc' }),
+      datalabels: labelYen({ color: '#0284c7' }),
       tooltip: {
         callbacks: {
           label: c => " 年合計: " + fmtYen(c.parsed.y),
@@ -731,8 +764,8 @@ new Chart(document.getElementById("commission-annual"), {
       },
     },
     scales: {
-      y: { beginAtZero: true, ticks: { color: "#94a3b8", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#334155" } },
-      x: { ticks: { color: "#94a3b8" }, grid: { display: false } },
+      y: { beginAtZero: true, ticks: { color: "#64748b", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#e2e8f0" } },
+      x: { ticks: { color: "#64748b" }, grid: { display: false } },
     },
   },
 });
@@ -745,7 +778,7 @@ new Chart(document.getElementById("insurance-annual"), {
     datasets: [{
       label: "保険本数 年合計",
       data: allYears.map(y => yearTotals[y].insurance),
-      backgroundColor: "#fbbf24",
+      backgroundColor: "#f59e0b",
     }],
   },
   options: {
@@ -754,7 +787,7 @@ new Chart(document.getElementById("insurance-annual"), {
     plugins: {
       legend: { display: false },
       datalabels: {
-        anchor: 'end', align: 'top', color: '#fbbf24',
+        anchor: 'end', align: 'top', color: '#f59e0b',
         font: { size: 10, weight: '600' },
         formatter: v => (v == null || v === 0) ? '' : v.toFixed(1) + '本',
       },
@@ -770,8 +803,8 @@ new Chart(document.getElementById("insurance-annual"), {
       },
     },
     scales: {
-      y: { beginAtZero: true, ticks: { color: "#94a3b8", callback: v => v + "本" }, grid: { color: "#334155" } },
-      x: { ticks: { color: "#94a3b8" }, grid: { display: false } },
+      y: { beginAtZero: true, ticks: { color: "#64748b", callback: v => v + "本" }, grid: { color: "#e2e8f0" } },
+      x: { ticks: { color: "#64748b" }, grid: { display: false } },
     },
   },
 });
@@ -784,7 +817,7 @@ new Chart(document.getElementById("b-monthly-all"), {
     datasets: [{
       label: "B収入",
       data: DATA.map(r => r.b_income),
-      backgroundColor: DATA.map(r => (r.b_income || 0) > 200000 ? "#c4b5fd" : "#a78bfa"),
+      backgroundColor: DATA.map(r => (r.b_income || 0) > 200000 ? "#7c3aed" : "#8b5cf6"),
     }],
   },
   options: {
@@ -794,14 +827,14 @@ new Chart(document.getElementById("b-monthly-all"), {
       legend: { display: false },
       datalabels: {
         display: (c) => (c.dataset.data[c.dataIndex] || 0) > 100000,
-        anchor: 'end', align: 'top', color: '#c4b5fd',
+        anchor: 'end', align: 'top', color: '#7c3aed',
         font: { size: 9, weight: '600' },
         formatter: v => '¥' + (v/10000).toFixed(0) + '万',
       },
     },
     scales: {
-      y: { ticks: { color: "#94a3b8", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#334155" } },
-      x: { ticks: { color: "#94a3b8", autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+      y: { ticks: { color: "#64748b", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#e2e8f0" } },
+      x: { ticks: { color: "#64748b", autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
     },
   },
 });
@@ -829,7 +862,7 @@ new Chart(document.getElementById("b-monthly-all"), {
     </div>
     <div class="card kpi">
       <div class="label">チームF 月平均（直近12ヶ月）</div>
-      <div class="value" style="color:#38bdf8">${fmtYen(teamAvg12)}</div>
+      <div class="value" style="color:#0ea5e9">${fmtYen(teamAvg12)}</div>
       <div class="sub">${last12.length ? ym(last12[0]) + " 〜 " + ym(last12[last12.length-1]) : "-"}</div>
     </div>
     <div class="card kpi">
@@ -851,10 +884,10 @@ new Chart(document.getElementById("b-monthly-all"), {
       datasets: [
         {
           label: "チームF", data: recent24.map(r => r.team_f),
-          backgroundColor: "rgba(251,191,36,0.85)", order: 3,
+          backgroundColor: "rgba(245,158,11,0.85)", order: 3,
           datalabels: {
-            display: v => v != null && v > 0,
-            anchor: 'end', align: 'top', color: '#fbbf24',
+            display: c => { const v = c.dataset.data[c.dataIndex]; return v != null && v > 0; },
+            anchor: 'end', align: 'top', color: '#f59e0b',
             font: { size: 9, weight: '600' },
             rotation: -45,
             formatter: v => v == null ? '' : '¥' + (v/10000).toFixed(0) + '万',
@@ -862,13 +895,13 @@ new Chart(document.getElementById("b-monthly-all"), {
         },
         {
           label: "直近12ヶ月平均", data: recent24.map(() => teamAvg12), type: "line",
-          borderColor: "#38bdf8", borderWidth: 2, borderDash: [6, 4],
+          borderColor: "#0ea5e9", borderWidth: 2, borderDash: [6, 4],
           pointRadius: 0, fill: false, order: 1,
           datalabels: { display: false },
         },
         {
           label: "全期間平均", data: recent24.map(() => teamAvgAll), type: "line",
-          borderColor: "#a78bfa", borderWidth: 2, borderDash: [3, 4],
+          borderColor: "#8b5cf6", borderWidth: 2, borderDash: [3, 4],
           pointRadius: 0, fill: false, order: 2,
           datalabels: { display: false },
         },
@@ -878,12 +911,12 @@ new Chart(document.getElementById("b-monthly-all"), {
       maintainAspectRatio: false,
       layout: { padding: { top: 32 } },
       plugins: {
-        legend: { labels: { color: "#e2e8f0" } },
+        legend: { labels: { color: "#334155" } },
         tooltip: { callbacks: { label: c => " " + c.dataset.label + ": " + fmtYen(c.parsed.y) } },
       },
       scales: {
-        y: { beginAtZero: true, ticks: { color: "#94a3b8", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#334155" } },
-        x: { ticks: { color: "#94a3b8", autoSkip: false, maxRotation: 60, minRotation: 45, font: { size: 9 } }, grid: { display: false } },
+        y: { beginAtZero: true, ticks: { color: "#64748b", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#e2e8f0" } },
+        x: { ticks: { color: "#64748b", autoSkip: false, maxRotation: 60, minRotation: 45, font: { size: 9 } }, grid: { display: false } },
       },
     },
   });
@@ -898,15 +931,15 @@ new Chart(document.getElementById("f-monthly-line"), {
       {
         label: "個人F",
         data: DATA.map(r => r.kojin_f),
-        borderColor: "#4ade80", backgroundColor: "rgba(74,222,128,0.08)",
-        fill: true, tension: 0.2, pointRadius: 2, pointBackgroundColor: "#4ade80",
+        borderColor: "#16a34a", backgroundColor: "rgba(22,163,74,0.08)",
+        fill: true, tension: 0.2, pointRadius: 2, pointBackgroundColor: "#16a34a",
         datalabels: { display: false },
       },
       {
         label: "チームF",
         data: DATA.map(r => r.team_f),
-        borderColor: "#fbbf24", backgroundColor: "rgba(251,191,36,0.08)",
-        fill: true, tension: 0.2, pointRadius: 2, pointBackgroundColor: "#fbbf24",
+        borderColor: "#f59e0b", backgroundColor: "rgba(245,158,11,0.08)",
+        fill: true, tension: 0.2, pointRadius: 2, pointBackgroundColor: "#f59e0b",
         datalabels: { display: false },
       },
     ],
@@ -914,11 +947,11 @@ new Chart(document.getElementById("f-monthly-line"), {
   options: {
     maintainAspectRatio: false,
     plugins: {
-      legend: { labels: { color: "#e2e8f0" } },
+      legend: { labels: { color: "#334155" } },
     },
     scales: {
-      y: { ticks: { color: "#94a3b8", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#334155" } },
-      x: { ticks: { color: "#94a3b8", autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+      y: { ticks: { color: "#64748b", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#e2e8f0" } },
+      x: { ticks: { color: "#64748b", autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
     },
   },
 });
@@ -929,15 +962,15 @@ new Chart(document.getElementById("f-total-annual"), {
   data: {
     labels: allYears,
     datasets: [
-      { label: "個人F 月平均", data: allYears.map(y => yearTotals[y].avg_kojin_f), backgroundColor: "#4ade80" },
-      { label: "チームF 月平均", data: allYears.map(y => yearTotals[y].avg_team_f), backgroundColor: "#fbbf24" },
+      { label: "個人F 月平均", data: allYears.map(y => yearTotals[y].avg_kojin_f), backgroundColor: "#16a34a" },
+      { label: "チームF 月平均", data: allYears.map(y => yearTotals[y].avg_team_f), backgroundColor: "#f59e0b" },
     ],
   },
   options: {
     maintainAspectRatio: false,
     plugins: {
-      legend: { labels: { color: "#e2e8f0" } },
-      datalabels: labelYen({ anchor: 'center', align: 'center', color: '#0f172a', size: 9 }),
+      legend: { labels: { color: "#334155" } },
+      datalabels: labelYen({ anchor: 'center', align: 'center', color: '#ffffff', size: 9 }),
       tooltip: {
         callbacks: {
           footer: items => {
@@ -949,8 +982,8 @@ new Chart(document.getElementById("f-total-annual"), {
       },
     },
     scales: {
-      y: { stacked: true, ticks: { color: "#94a3b8", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#334155" } },
-      x: { stacked: true, ticks: { color: "#94a3b8" }, grid: { display: false } },
+      y: { stacked: true, ticks: { color: "#64748b", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#e2e8f0" } },
+      x: { stacked: true, ticks: { color: "#64748b" }, grid: { display: false } },
     },
   },
 });
@@ -963,11 +996,11 @@ new Chart(document.getElementById("kojin-leverage-annual"), {
     datasets: [{
       label: "コミッション ÷ 個人F",
       data: allYears.map(y => yearTotals[y].leverage),
-      borderColor: "#c4b5fd",
-      backgroundColor: "rgba(167,139,250,0.2)",
+      borderColor: "#7c3aed",
+      backgroundColor: "rgba(139,92,246,0.2)",
       fill: true,
       tension: 0.3,
-      pointBackgroundColor: "#c4b5fd",
+      pointBackgroundColor: "#7c3aed",
       pointRadius: 5,
     }],
   },
@@ -979,7 +1012,7 @@ new Chart(document.getElementById("kojin-leverage-annual"), {
       datalabels: {
         anchor: 'end',
         align: 'top',
-        color: '#c4b5fd',
+        color: '#7c3aed',
         font: { size: 10, weight: '600' },
         formatter: v => v == null ? '' : v.toFixed(2) + '倍',
       },
@@ -997,8 +1030,8 @@ new Chart(document.getElementById("kojin-leverage-annual"), {
       },
     },
     scales: {
-      y: { ticks: { color: "#94a3b8", callback: v => v.toFixed(1) + "倍" }, grid: { color: "#334155" }, beginAtZero: true },
-      x: { ticks: { color: "#94a3b8" }, grid: { display: false } },
+      y: { ticks: { color: "#64748b", callback: v => v.toFixed(1) + "倍" }, grid: { color: "#e2e8f0" }, beginAtZero: true },
+      x: { ticks: { color: "#64748b" }, grid: { display: false } },
     },
   },
 });
@@ -1010,9 +1043,10 @@ const heatRows = allYears.map(y => {
     const r = DATA.find(x => x.year === y && x.month === m);
     if (!r || r.b_income == null) return `<td>-</td>`;
     const intensity = Math.min(1, (r.b_income || 0) / maxB);
-    const bg = `rgba(167,139,250,${0.12 + intensity * 0.75})`;
+    const bg = `rgba(139,92,246,${0.12 + intensity * 0.75})`;
+    const fg = intensity > 0.45 ? "#ffffff" : "var(--text)";
     const label = (r.b_income/10000).toFixed(0) + "万";
-    return `<td style="background:${bg}" title="${ym(r)}: ${fmtYen(r.b_income)}">${label}</td>`;
+    return `<td style="background:${bg}; color:${fg}" title="${ym(r)}: ${fmtYen(r.b_income)}">${label}</td>`;
   }).join("");
   return `<tr><td class="year-label">${y}</td>${cells}</tr>`;
 });
@@ -1100,22 +1134,22 @@ function renderYearView(yearKey) {
       datasets: [
         {
           label: "コミッション（月）", data: comMonthly,
-          backgroundColor: "rgba(56,189,248,0.85)", yAxisID: "y", order: 2,
+          backgroundColor: "rgba(14,165,233,0.85)", yAxisID: "y", order: 2,
           datalabels: isAll ? { display: false } : {
-            display: v => v != null && v > 0,
-            anchor: 'end', align: 'top', color: '#38bdf8',
+            display: c => { const v = c.dataset.data[c.dataIndex]; return v != null && v > 0; },
+            anchor: 'end', align: 'top', color: '#0ea5e9',
             font: { size: 9, weight: '600' },
             formatter: v => v == null ? '' : '¥' + (v/10000).toFixed(0) + '万',
           },
         },
         {
           label: "累計", data: comCum, type: "line",
-          borderColor: "#7dd3fc", backgroundColor: "rgba(125,211,252,0.12)",
+          borderColor: "#0284c7", backgroundColor: "rgba(2,132,199,0.12)",
           borderWidth: 2.5, tension: 0.25, fill: false,
-          pointBackgroundColor: "#7dd3fc", pointRadius: isAll ? 2 : 4,
+          pointBackgroundColor: "#0284c7", pointRadius: isAll ? 2 : 4,
           yAxisID: "y2", order: 1,
           datalabels: isAll ? { display: false } : {
-            anchor: 'end', align: 'top', color: '#7dd3fc',
+            anchor: 'end', align: 'top', color: '#0284c7',
             font: { size: 9, weight: '600' },
             formatter: v => v == null ? '' : '¥' + (v/10000).toFixed(0) + '万',
           },
@@ -1126,13 +1160,13 @@ function renderYearView(yearKey) {
       maintainAspectRatio: false,
       layout: { padding: { top: 28 } },
       plugins: {
-        legend: { labels: { color: "#e2e8f0" } },
+        legend: { labels: { color: "#334155" } },
         tooltip: { callbacks: { label: c => " " + c.dataset.label + ": " + fmtYen(c.parsed.y) } },
       },
       scales: {
-        y: { position: "left", beginAtZero: true, ticks: { color: "#38bdf8", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#334155" } },
-        y2: { position: "right", beginAtZero: true, ticks: { color: "#7dd3fc", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { display: false } },
-        x: { ticks: { color: "#94a3b8", autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+        y: { position: "left", beginAtZero: true, ticks: { color: "#0ea5e9", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#e2e8f0" } },
+        y2: { position: "right", beginAtZero: true, ticks: { color: "#0284c7", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { display: false } },
+        x: { ticks: { color: "#64748b", autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
       },
     },
   });
@@ -1151,22 +1185,22 @@ function renderYearView(yearKey) {
       datasets: [
         {
           label: "保険本数（月）", data: insMonthly,
-          backgroundColor: "rgba(251,191,36,0.85)", yAxisID: "y", order: 2,
+          backgroundColor: "rgba(245,158,11,0.85)", yAxisID: "y", order: 2,
           datalabels: isAll ? { display: false } : {
-            display: v => v != null && v > 0,
-            anchor: 'end', align: 'top', color: '#fbbf24',
+            display: c => { const v = c.dataset.data[c.dataIndex]; return v != null && v > 0; },
+            anchor: 'end', align: 'top', color: '#f59e0b',
             font: { size: 9, weight: '600' },
             formatter: v => v == null ? '' : v.toFixed(1),
           },
         },
         {
           label: "累計", data: insCum, type: "line",
-          borderColor: "#38bdf8", backgroundColor: "rgba(56,189,248,0.12)",
+          borderColor: "#0ea5e9", backgroundColor: "rgba(14,165,233,0.12)",
           borderWidth: 2.5, tension: 0.25, fill: false,
-          pointBackgroundColor: "#38bdf8", pointRadius: isAll ? 2 : 4,
+          pointBackgroundColor: "#0ea5e9", pointRadius: isAll ? 2 : 4,
           yAxisID: "y2", order: 1,
           datalabels: isAll ? { display: false } : {
-            anchor: 'end', align: 'top', color: '#38bdf8',
+            anchor: 'end', align: 'top', color: '#0ea5e9',
             font: { size: 9, weight: '600' },
             formatter: v => v == null ? '' : v.toFixed(1),
           },
@@ -1177,13 +1211,13 @@ function renderYearView(yearKey) {
       maintainAspectRatio: false,
       layout: { padding: { top: 28 } },
       plugins: {
-        legend: { labels: { color: "#e2e8f0" } },
+        legend: { labels: { color: "#334155" } },
         tooltip: { callbacks: { label: c => " " + c.dataset.label + ": " + (c.parsed.y == null ? "-" : c.parsed.y.toFixed(1) + "本") } },
       },
       scales: {
-        y: { position: "left", beginAtZero: true, ticks: { color: "#fbbf24", callback: v => v + "本" }, grid: { color: "#334155" } },
-        y2: { position: "right", beginAtZero: true, ticks: { color: "#38bdf8", callback: v => v + "本" }, grid: { display: false } },
-        x: { ticks: { color: "#94a3b8", autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+        y: { position: "left", beginAtZero: true, ticks: { color: "#f59e0b", callback: v => v + "本" }, grid: { color: "#e2e8f0" } },
+        y2: { position: "right", beginAtZero: true, ticks: { color: "#0ea5e9", callback: v => v + "本" }, grid: { display: false } },
+        x: { ticks: { color: "#64748b", autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
       },
     },
   });
@@ -1200,11 +1234,11 @@ function renderYearView(yearKey) {
       datasets: [{
         label: "B収入",
         data: bMonthly,
-        borderColor: "#c4b5fd",
-        backgroundColor: "rgba(167,139,250,0.25)",
+        borderColor: "#7c3aed",
+        backgroundColor: "rgba(139,92,246,0.25)",
         fill: true,
         tension: 0.25,
-        pointBackgroundColor: "#c4b5fd",
+        pointBackgroundColor: "#7c3aed",
         pointRadius: isAll ? 2 : 5,
       }],
     },
@@ -1213,11 +1247,11 @@ function renderYearView(yearKey) {
       layout: { padding: { top: 24 } },
       plugins: {
         legend: { display: false },
-        datalabels: isAll ? { display: false } : labelYen({ color: '#c4b5fd' }),
+        datalabels: isAll ? { display: false } : labelYen({ color: '#7c3aed' }),
       },
       scales: {
-        y: { ticks: { color: "#94a3b8", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#334155" } },
-        x: { ticks: { color: "#94a3b8", autoSkip: true, maxTicksLimit: isAll ? 12 : 12 }, grid: { display: false } },
+        y: { ticks: { color: "#64748b", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#e2e8f0" } },
+        x: { ticks: { color: "#64748b", autoSkip: true, maxTicksLimit: isAll ? 12 : 12 }, grid: { display: false } },
       },
     },
   });
@@ -1228,14 +1262,14 @@ function renderYearView(yearKey) {
   const cTeam  = isAll ? DATA.map(r => r.team_f)  : months.map(m => { const r = targetRows.find(x => x.month === m); return r ? r.team_f  : null; });
   const cB     = isAll ? DATA.map(r => r.b_income): months.map(m => { const r = targetRows.find(x => x.month === m); return r ? r.b_income: null; });
   const barLbl = isAll ? { display: false } : {
-    display: v => v != null && v > 0,
-    anchor: 'end', align: 'top', color: '#e2e8f0',
+    display: c => { const v = c.dataset.data[c.dataIndex]; return v != null && v > 0; },
+    anchor: 'end', align: 'top', color: '#334155',
     font: { size: 9, weight: '600' },
     formatter: v => '¥' + (v/10000).toFixed(0) + '万',
   };
   const lineLbl = isAll ? { display: false } : {
-    display: v => v != null && v > 0,
-    anchor: 'end', align: 'top', color: '#c4b5fd',
+    display: c => { const v = c.dataset.data[c.dataIndex]; return v != null && v > 0; },
+    anchor: 'end', align: 'top', color: '#7c3aed',
     font: { size: 9, weight: '600' },
     formatter: v => '¥' + (v/10000).toFixed(0) + '万',
   };
@@ -1244,13 +1278,13 @@ function renderYearView(yearKey) {
     data: {
       labels,
       datasets: [
-        { label: "個人F", data: cKojin, backgroundColor: "rgba(74,222,128,0.85)", order: 2, datalabels: barLbl },
-        { label: "チームF", data: cTeam, backgroundColor: "rgba(251,191,36,0.85)", order: 3, datalabels: barLbl },
+        { label: "個人F", data: cKojin, backgroundColor: "rgba(22,163,74,0.85)", order: 2, datalabels: barLbl },
+        { label: "チームF", data: cTeam, backgroundColor: "rgba(245,158,11,0.85)", order: 3, datalabels: barLbl },
         {
           label: "B収入", data: cB, type: "line",
-          borderColor: "#c4b5fd", backgroundColor: "rgba(167,139,250,0.15)",
+          borderColor: "#7c3aed", backgroundColor: "rgba(139,92,246,0.15)",
           borderWidth: 2.5, fill: true, tension: 0.3,
-          pointBackgroundColor: "#c4b5fd", pointRadius: isAll ? 2 : 5,
+          pointBackgroundColor: "#7c3aed", pointRadius: isAll ? 2 : 5,
           order: 1, datalabels: lineLbl,
         },
       ],
@@ -1259,11 +1293,11 @@ function renderYearView(yearKey) {
       maintainAspectRatio: false,
       layout: { padding: { top: 30 } },
       plugins: {
-        legend: { labels: { color: "#e2e8f0" } },
+        legend: { labels: { color: "#334155" } },
       },
       scales: {
-        y: { ticks: { color: "#94a3b8", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#334155" } },
-        x: { ticks: { color: "#94a3b8", autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+        y: { ticks: { color: "#64748b", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#e2e8f0" } },
+        x: { ticks: { color: "#64748b", autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
       },
     },
   });
@@ -1279,20 +1313,20 @@ function renderYearView(yearKey) {
     data: {
       labels: months.map(m => m + "月"),
       datasets: [
-        { label: prevY + "年", data: dataPrev, backgroundColor: "#64748b" },
-        { label: baseYear + "年", data: dataThis, backgroundColor: "#38bdf8" },
+        { label: prevY + "年", data: dataPrev, backgroundColor: "#94a3b8" },
+        { label: baseYear + "年", data: dataThis, backgroundColor: "#0ea5e9" },
       ],
     },
     options: {
       maintainAspectRatio: false,
       layout: { padding: { top: 24 } },
       plugins: {
-        legend: { labels: { color: "#e2e8f0" } },
+        legend: { labels: { color: "#334155" } },
         datalabels: labelYen({ size: 9 }),
       },
       scales: {
-        y: { ticks: { color: "#94a3b8", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#334155" } },
-        x: { ticks: { color: "#94a3b8" }, grid: { display: false } },
+        y: { ticks: { color: "#64748b", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#e2e8f0" } },
+        x: { ticks: { color: "#64748b" }, grid: { display: false } },
       },
     },
   });
@@ -1306,20 +1340,20 @@ function renderYearView(yearKey) {
     data: {
       labels,
       datasets: [
-        { label: "個人F適用レート", data: rateK, borderColor: "#4ade80", backgroundColor: "#4ade80", tension: 0.2 },
-        { label: "全体F適用レート", data: rateT, borderColor: "#38bdf8", backgroundColor: "#38bdf8", tension: 0.2 },
+        { label: "個人F適用レート", data: rateK, borderColor: "#16a34a", backgroundColor: "#16a34a", tension: 0.2 },
+        { label: "全体F適用レート", data: rateT, borderColor: "#0ea5e9", backgroundColor: "#0ea5e9", tension: 0.2 },
       ],
     },
     options: {
       maintainAspectRatio: false,
       layout: { padding: { top: 24 } },
       plugins: {
-        legend: { labels: { color: "#e2e8f0" } },
+        legend: { labels: { color: "#334155" } },
         datalabels: isAll ? { display: false } : labelPct({ size: 9 }),
       },
       scales: {
-        y: { ticks: { color: "#94a3b8", callback: v => v + "%" }, grid: { color: "#334155" }, beginAtZero: true },
-        x: { ticks: { color: "#94a3b8", autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+        y: { ticks: { color: "#64748b", callback: v => v + "%" }, grid: { color: "#e2e8f0" }, beginAtZero: true },
+        x: { ticks: { color: "#64748b", autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
       },
     },
   });
@@ -1356,8 +1390,8 @@ if (MEMBER_DATA && MEMBER_DATA.length > 0) {
   const ymLabel = ym => { const s = String(ym); return s.slice(0, 4) + "/" + s.slice(4); };
 
   const memberColors = [
-    "#4ade80", "#38bdf8", "#fbbf24", "#f472b6",
-    "#a78bfa", "#fb923c", "#34d399", "#f87171",
+    "#16a34a", "#0ea5e9", "#f59e0b", "#ec4899",
+    "#8b5cf6", "#f97316", "#10b981", "#dc2626",
   ];
 
   const grid = document.getElementById("member-cards-grid");
@@ -1375,7 +1409,7 @@ if (MEMBER_DATA && MEMBER_DATA.length > 0) {
     const maxFee = Math.max(...nonNull);
     const totalFee = nonNull.reduce((a, v) => a + v, 0);
     const delta = prevFee != null ? latestFee - prevFee : null;
-    const deltaStr = delta == null ? "" : (delta >= 0 ? `<span style="color:#4ade80">▲¥${(delta/10000).toFixed(0)}万</span>` : `<span style="color:#f87171">▼¥${(Math.abs(delta)/10000).toFixed(0)}万</span>`);
+    const deltaStr = delta == null ? "" : (delta >= 0 ? `<span style="color:#16a34a">▲¥${(delta/10000).toFixed(0)}万</span>` : `<span style="color:#dc2626">▼¥${(Math.abs(delta)/10000).toFixed(0)}万</span>`);
     const latestYM = rows.length ? ymLabel(rows[rows.length - 1].ym) : "-";
 
     // カードHTML
@@ -1387,15 +1421,15 @@ if (MEMBER_DATA && MEMBER_DATA.length > 0) {
       <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
         <div>
           <div style="font-size:15px; font-weight:700; color:${color};">${name}</div>
-          <div style="font-size:11px; color:#94a3b8; margin-top:2px;">最新: ${latestYM}</div>
+          <div style="font-size:11px; color:#64748b; margin-top:2px;">最新: ${latestYM}</div>
         </div>
         <div style="text-align:right;">
-          <div style="font-size:18px; font-weight:700;">¥${(latestFee/10000).toFixed(0)}<span style="font-size:11px; color:#94a3b8;">万</span></div>
+          <div style="font-size:18px; font-weight:700;">¥${(latestFee/10000).toFixed(0)}<span style="font-size:11px; color:#64748b;">万</span></div>
           <div style="font-size:11px; margin-top:2px;">${deltaStr}</div>
         </div>
       </div>
       <div style="height:120px; margin-bottom:10px;"><canvas id="${canvasId}"></canvas></div>
-      <div style="display:flex; gap:16px; font-size:11px; color:#94a3b8; border-top:1px solid #334155; padding-top:8px;">
+      <div style="display:flex; gap:16px; font-size:11px; color:#64748b; border-top:1px solid #e2e8f0; padding-top:8px;">
         <span>自己ベスト <strong style="color:${color}">¥${(maxFee/10000).toFixed(0)}万</strong></span>
         <span>通算合計 <strong style="color:${color}">¥${(totalFee/10000).toFixed(0)}万</strong></span>
         <span>稼働月数 <strong style="color:${color}">${nonNull.filter(v=>v>0).length}ヶ月</strong></span>
@@ -1411,7 +1445,7 @@ if (MEMBER_DATA && MEMBER_DATA.length > 0) {
         datasets: [{
           data: fees.map(v => v ?? 0),
           backgroundColor: fees.map((v, idx) => {
-            if (v == null || v === 0) return "#1e293b";
+            if (v == null || v === 0) return "#e2e8f0";
             return idx === fees.length - 1 || fees.slice(idx+1).every(x => x == null || x === 0)
               ? color
               : color + "99";
@@ -1431,11 +1465,11 @@ if (MEMBER_DATA && MEMBER_DATA.length > 0) {
         },
         scales: {
           y: {
-            ticks: { color: "#94a3b8", font: { size: 9 }, callback: v => "¥" + (v/10000).toFixed(0) + "万", maxTicksLimit: 4 },
-            grid: { color: "#334155" },
+            ticks: { color: "#64748b", font: { size: 9 }, callback: v => "¥" + (v/10000).toFixed(0) + "万", maxTicksLimit: 4 },
+            grid: { color: "#e2e8f0" },
           },
           x: {
-            ticks: { color: "#64748b", font: { size: 8 }, autoSkip: true, maxTicksLimit: 8 },
+            ticks: { color: "#94a3b8", font: { size: 8 }, autoSkip: true, maxTicksLimit: 8 },
             grid: { display: false },
           },
         },
