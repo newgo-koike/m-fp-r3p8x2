@@ -277,6 +277,17 @@
 
 <div id="tab-team" class="tab-pane">
 
+<!-- ===================== チームF: 推移と平均 ===================== -->
+<div class="section-label">チームF ・ 推移と平均 <span class="meta">チームが動かしているフィーの規模</span></div>
+
+<section class="grid kpi" id="team-f-kpi"></section>
+
+<section class="card" style="margin-bottom:24px;">
+  <h2 class="chart-title"><strong style="color:var(--team)">チームF</strong> の月次推移（直近24ヶ月・金額表示） + 平均ライン</h2>
+  <div class="chart-wrap tall"><canvas id="team-f-recent"></canvas></div>
+  <div class="legend-note">金の棒=各月のチームF（棒の上に金額）。青の破線=直近12ヶ月平均、紫の破線=全期間平均</div>
+</section>
+
 <!-- ===================== 全期間: チーム規模・効率の指標 ===================== -->
 <div class="section-label">全期間 ・ チーム規模 / 効率の指標</div>
 
@@ -794,6 +805,89 @@ new Chart(document.getElementById("b-monthly-all"), {
     },
   },
 });
+
+/* ---------------- チームF 月次推移（直近24ヶ月・数値表示 + 平均ライン） ---------------- */
+{
+  const teamRows = DATA.filter(r => r.team_f != null);
+  const recent24 = teamRows.slice(-24);
+  const teamAvgAll = teamRows.length ? sum(teamRows, "team_f") / teamRows.length : 0;
+  const last12 = teamRows.slice(-12);
+  const teamAvg12 = last12.length ? sum(last12, "team_f") / last12.length : 0;
+  const latestTeam = teamRows[teamRows.length - 1];
+  const bestTeam = teamRows.reduce((a, b) => (b.team_f || 0) > (a.team_f || 0) ? b : a, teamRows[0] || {});
+
+  document.getElementById("team-f-kpi").innerHTML = `
+    <div class="card kpi">
+      <div class="label">最新月 (${latestTeam ? ym(latestTeam) : "-"}) チームF</div>
+      <div class="value" style="color:var(--team)">${fmtYen(latestTeam ? latestTeam.team_f : null)}</div>
+      <div class="sub">前月比 ${(() => {
+        const prev = teamRows[teamRows.length - 2];
+        if (!prev || !prev.team_f) return "-";
+        const d = (latestTeam.team_f - prev.team_f) / prev.team_f * 100;
+        return `<span class="${colorDelta(d)}">${fmtPct(d)}</span>`;
+      })()}</div>
+    </div>
+    <div class="card kpi">
+      <div class="label">チームF 月平均（直近12ヶ月）</div>
+      <div class="value" style="color:#38bdf8">${fmtYen(teamAvg12)}</div>
+      <div class="sub">${last12.length ? ym(last12[0]) + " 〜 " + ym(last12[last12.length-1]) : "-"}</div>
+    </div>
+    <div class="card kpi">
+      <div class="label">チームF 月平均（全期間）</div>
+      <div class="value" style="color:var(--b-bright)">${fmtYen(teamAvgAll)}</div>
+      <div class="sub">${teamRows.length}ヶ月分の平均</div>
+    </div>
+    <div class="card kpi">
+      <div class="label">チームF 自己ベスト月</div>
+      <div class="value">${fmtYen(bestTeam.team_f)}</div>
+      <div class="sub">${bestTeam.year ? ym(bestTeam) : "-"}</div>
+    </div>
+  `;
+
+  new Chart(document.getElementById("team-f-recent"), {
+    type: "bar",
+    data: {
+      labels: recent24.map(ym),
+      datasets: [
+        {
+          label: "チームF", data: recent24.map(r => r.team_f),
+          backgroundColor: "rgba(251,191,36,0.85)", order: 3,
+          datalabels: {
+            display: v => v != null && v > 0,
+            anchor: 'end', align: 'top', color: '#fbbf24',
+            font: { size: 9, weight: '600' },
+            rotation: -45,
+            formatter: v => v == null ? '' : '¥' + (v/10000).toFixed(0) + '万',
+          },
+        },
+        {
+          label: "直近12ヶ月平均", data: recent24.map(() => teamAvg12), type: "line",
+          borderColor: "#38bdf8", borderWidth: 2, borderDash: [6, 4],
+          pointRadius: 0, fill: false, order: 1,
+          datalabels: { display: false },
+        },
+        {
+          label: "全期間平均", data: recent24.map(() => teamAvgAll), type: "line",
+          borderColor: "#a78bfa", borderWidth: 2, borderDash: [3, 4],
+          pointRadius: 0, fill: false, order: 2,
+          datalabels: { display: false },
+        },
+      ],
+    },
+    options: {
+      maintainAspectRatio: false,
+      layout: { padding: { top: 32 } },
+      plugins: {
+        legend: { labels: { color: "#e2e8f0" } },
+        tooltip: { callbacks: { label: c => " " + c.dataset.label + ": " + fmtYen(c.parsed.y) } },
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { color: "#94a3b8", callback: v => "¥" + (v/10000).toFixed(0) + "万" }, grid: { color: "#334155" } },
+        x: { ticks: { color: "#94a3b8", autoSkip: false, maxRotation: 60, minRotation: 45, font: { size: 9 } }, grid: { display: false } },
+      },
+    },
+  });
+}
 
 /* ---------------- 個人F・チームF 月次推移（全期間・固定） ---------------- */
 new Chart(document.getElementById("f-monthly-line"), {
