@@ -154,6 +154,21 @@
     font-size: 11px;
     margin-top: 8px;
   }
+  .table-wrap { overflow: auto; max-height: 480px; border-radius: 8px; border: 1px solid var(--panel-2); }
+  table.data { border-collapse: collapse; width: 100%; font-size: 12.5px; white-space: nowrap; }
+  table.data th {
+    position: sticky; top: 0; z-index: 1;
+    background: #f8fafc; color: var(--muted);
+    font-weight: 600; text-align: right;
+    padding: 8px 12px; border-bottom: 2px solid var(--panel-2);
+  }
+  table.data th:first-child, table.data td:first-child { text-align: left; }
+  table.data td { padding: 7px 12px; border-bottom: 1px solid #eef2f7; text-align: right; color: var(--text); }
+  table.data tbody tr:nth-child(even) td { background: #fafbfd; }
+  table.data tbody tr:hover td { background: #f1f5f9; }
+  table.data td.acc { color: var(--commission); font-weight: 600; }
+  table.data td.acc2 { color: var(--team); font-weight: 600; }
+  table.data tr.total td { border-top: 2px solid var(--panel-2); font-weight: 700; background: #f8fafc; }
   footer {
     padding: 24px;
     text-align: center;
@@ -282,6 +297,12 @@
   </div>
 </section>
 
+<section class="card" style="margin-bottom:16px;">
+  <h2 class="chart-title">月次実績テーブル（選択年）</h2>
+  <div id="year-table"></div>
+  <div class="legend-note">青=コミッション累計、金=保険本数累計。最終行は合計</div>
+</section>
+
 <section class="grid charts-2">
   <div class="card b-emphasis">
     <h2 class="chart-title"><strong>B収入</strong> の月次推移（選択年）</h2>
@@ -320,6 +341,12 @@
   <div class="legend-note">金の棒=各月のチームF（棒の上に金額）。青の破線=直近12ヶ月平均、紫の破線=全期間平均</div>
 </section>
 
+<section class="card" style="margin-bottom:24px;">
+  <h2 class="chart-title">チームF 月次テーブル（直近12ヶ月）</h2>
+  <div id="team-table"></div>
+  <div class="legend-note">緑=前月比プラス、赤=マイナス。下2行は平均</div>
+</section>
+
 <!-- ===================== 全期間: チーム規模・効率の指標 ===================== -->
 <div class="section-label">全期間 ・ チーム規模 / 効率の指標</div>
 
@@ -350,6 +377,15 @@
 </div><!-- /tab-team -->
 
 <div id="tab-sub" class="tab-pane">
+<!-- ===================== 全期間: 年別サマリーテーブル ===================== -->
+<div class="section-label">全期間 ・ 年別サマリー</div>
+
+<section class="card" style="margin-bottom:24px;">
+  <h2 class="chart-title">年別実績サマリーテーブル（全期間）</h2>
+  <div id="annual-table"></div>
+  <div class="legend-note">月平均は「合計 ÷ 入力月数」。途中の年でも公平に比較できる。最終行は通算</div>
+</section>
+
 <!-- ===================== 全期間: 補助情報 ===================== -->
 <div class="section-label">全期間 ・ 補助指標</div>
 
@@ -877,6 +913,26 @@ new Chart(document.getElementById("b-monthly-all"), {
     </div>
   `;
 
+  const t12start = teamRows.length - last12.length;
+  const teamTrs = last12.map((r, i) => {
+    const prev = teamRows[t12start + i - 1] || null;
+    const d = prev && prev.team_f ? (r.team_f - prev.team_f) / prev.team_f * 100 : null;
+    return `<tr>
+      <td>${ym(r)}</td>
+      <td>${fmtYen(r.team_f)}</td>
+      <td>${d == null ? "-" : `<span class="${colorDelta(d)}">${fmtPct(d)}</span>`}</td>
+      <td>${fmtYen(r.kojin_f)}</td>
+      <td>${fmtYen((r.kojin_f || 0) + (r.team_f || 0))}</td>
+    </tr>`;
+  }).join("");
+  const n12 = last12.length || 1;
+  document.getElementById("team-table").innerHTML = `<div class="table-wrap"><table class="data">
+    <thead><tr><th>月</th><th>チームF</th><th>前月比</th><th>個人F</th><th>F合計</th></tr></thead>
+    <tbody>${teamTrs}
+    <tr class="total"><td>平均（直近12ヶ月）</td><td>${fmtYen(teamAvg12)}</td><td></td><td>${fmtYen(sum(last12, "kojin_f") / n12)}</td><td>${fmtYen((sum(last12, "kojin_f") + sum(last12, "team_f")) / n12)}</td></tr>
+    <tr class="total"><td>平均（全期間）</td><td>${fmtYen(teamAvgAll)}</td><td></td><td></td><td></td></tr>
+    </tbody></table></div>`;
+
   new Chart(document.getElementById("team-f-recent"), {
     type: "bar",
     data: {
@@ -1056,6 +1112,30 @@ document.getElementById("heatmap-b").innerHTML = `
     <tbody>${heatRows.join("")}</tbody>
   </table>
 `;
+
+/* ---------------- 年別サマリーテーブル（全期間・固定） ---------------- */
+{
+  const anTrs = allYears.map(y => {
+    const t = yearTotals[y];
+    return `<tr>
+      <td>${y}年</td>
+      <td>${t.months}</td>
+      <td>${fmtYen(t.commission)}</td>
+      <td>${fmtYen(t.avg_commission)}</td>
+      <td>${t.insurance.toFixed(1)}</td>
+      <td>${fmtYen(t.b_income)}</td>
+      <td>${fmtRatio(t.b_ratio)}</td>
+      <td>${fmtYen(t.avg_kojin_f)}</td>
+      <td>${fmtYen(t.avg_team_f)}</td>
+    </tr>`;
+  }).join("");
+  const lifeIns = sum(DATA, "insurance");
+  document.getElementById("annual-table").innerHTML = `<div class="table-wrap"><table class="data">
+    <thead><tr><th>年</th><th>月数</th><th>コミッション合計</th><th>月平均</th><th>保険本数</th><th>B収入合計</th><th>B比率</th><th>個人F月平均</th><th>チームF月平均</th></tr></thead>
+    <tbody>${anTrs}
+    <tr class="total"><td>通算</td><td>${DATA.length}</td><td>${fmtYen(lifetime.commission)}</td><td>${fmtYen(lifetime.commission / (DATA.length || 1))}</td><td>${lifeIns.toFixed(1)}</td><td>${fmtYen(lifetime.b_income)}</td><td>${fmtRatio(lifetime.b_ratio)}</td><td>${fmtYen(lifetime.kojin_f / (DATA.length || 1))}</td><td>${fmtYen(lifetime.team_f / (DATA.length || 1))}</td></tr>
+    </tbody></table></div>`;
+}
 
 /* ---------------- 動的: 選択年で再描画 ---------------- */
 const charts = {};
@@ -1301,6 +1381,36 @@ function renderYearView(yearKey) {
       },
     },
   });
+
+  // ----- 月次実績テーブル（選択年） -----
+  {
+    let comC = 0, insC = 0;
+    const trs = targetRows.map(r => {
+      comC += r.commission || 0;
+      insC += r.insurance || 0;
+      return `<tr>
+        <td>${isAll ? ym(r) : r.month + "月"}</td>
+        <td class="num">${fmtYen(r.commission)}</td>
+        <td class="acc">${fmtYen(comC)}</td>
+        <td>${r.insurance == null ? "-" : r.insurance.toFixed(1)}</td>
+        <td class="acc2">${insC.toFixed(1)}</td>
+        <td>${fmtYen(r.kojin_f)}</td>
+        <td>${fmtYen(r.team_f)}</td>
+        <td>${fmtYen(r.b_income)}</td>
+      </tr>`;
+    }).join("");
+    const totalRow = `<tr class="total">
+      <td>${isAll ? "通算" : "合計"}</td>
+      <td>${fmtYen(totals.commission)}</td><td></td>
+      <td>${sum(targetRows, "insurance").toFixed(1)}</td><td></td>
+      <td>${fmtYen(totals.kojin_f)}</td>
+      <td>${fmtYen(totals.team_f)}</td>
+      <td>${fmtYen(totals.b_income)}</td>
+    </tr>`;
+    document.getElementById("year-table").innerHTML = `<div class="table-wrap"><table class="data">
+      <thead><tr><th>月</th><th>コミッション</th><th>累計</th><th>保険本数</th><th>累計本数</th><th>個人F</th><th>チームF</th><th>B収入</th></tr></thead>
+      <tbody>${trs}${totalRow}</tbody></table></div>`;
+  }
 
   // ----- 対前年同月（選択年が「全期間」のときは直近年で表示） -----
   destroyChart("yoy");
